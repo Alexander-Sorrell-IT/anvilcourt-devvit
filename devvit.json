@@ -52,7 +52,7 @@
           { "label": "Modmail only", "value": "modmail" },
           { "label": "Off", "value": "off" }
         ],
-        "defaultValue": ["both"]
+        "defaultValue": "both"
       },
       "appealsEnabled": {
         "type": "boolean",
