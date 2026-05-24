@@ -6,3 +6,7 @@ build/
 *.log
 .devvit/
 .DS_Store
+
+# generated client build artifacts (esbuild outputs into public/)
+public/*.js
+public/*.js.map
