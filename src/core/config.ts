@@ -1,4 +1,4 @@
-import type { RemovalSource } from './types';
+import type { RemovalSource } from './types.ts';
 
 export const DEFAULT_TEMPLATE =
   'Your {{itemType}} in r/{{subreddit}} was removed.\n\nReason: {{reason}}\n\n{{appeal}}';

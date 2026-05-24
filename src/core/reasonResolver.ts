@@ -1,4 +1,4 @@
-import type { RemovalEvent, ResolvedReason } from './types';
+import type { RemovalEvent, ResolvedReason } from './types.ts';
 
 export interface ReasonLookups {
   modLogReason: (itemId: string) => Promise<string | undefined>;

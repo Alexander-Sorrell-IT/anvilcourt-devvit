@@ -9,8 +9,7 @@
   },
   "include": ["../src/server/**/*"],
   "references": [
-    {
-      "path": "./tsconfig.shared.json"
-    }
+    { "path": "./tsconfig.shared.json" },
+    { "path": "./tsconfig.core.json" }
   ]
 }

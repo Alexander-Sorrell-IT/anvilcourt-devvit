@@ -1,4 +1,4 @@
-import type { ReceiptRecord } from './types';
+import type { ReceiptRecord } from './types.ts';
 
 export function isAppealReply(o: { hasRecentReceipt: boolean; isFromModerator: boolean; isInternal: boolean }): boolean {
   if (o.isFromModerator || o.isInternal) return false;

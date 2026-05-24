@@ -1,36 +1,14 @@
-export type InitResponse = {
-  type: "init";
-  postId: string;
-  count: number;
-  username: string;
-};
-
-export type IncrementResponse = {
-  type: "increment";
-  postId: string;
-  count: number;
-};
-
-export type IncrementRequest = {
-  amount: number;
-};
-
-export type DecrementResponse = {
-  type: "decrement";
-  postId: string;
-  count: number;
-};
-
-export type DecrementRequest = {
-  amount: number;
-};
-
-export const ApiEndpoint = {
-  Init: "/api/init",
-  Increment: "/api/increment",
-  Decrement: "/api/decrement",
-  OnPostCreate: "/internal/menu/post-create",
+// Internal endpoint paths. These must match the trigger/menu/form endpoints
+// declared in devvit.json.
+export const Endpoint = {
   OnAppInstall: "/internal/on-app-install",
+  OnModAction: "/internal/triggers/mod-action",
+  OnAutomodFilterPost: "/internal/triggers/automod-filter-post",
+  OnAutomodFilterComment: "/internal/triggers/automod-filter-comment",
+  OnModMail: "/internal/triggers/modmail",
+  MenuLookupUser: "/internal/menu/lookup-user",
+  FormLookupUser: "/internal/form/lookup-user",
+  MenuRecentLog: "/internal/menu/recent-log",
 } as const;
 
-export type ApiEndpoint = (typeof ApiEndpoint)[keyof typeof ApiEndpoint];
+export type Endpoint = (typeof Endpoint)[keyof typeof Endpoint];

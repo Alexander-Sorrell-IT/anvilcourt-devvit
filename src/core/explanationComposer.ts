@@ -1,4 +1,4 @@
-import type { ResolvedReason, ItemType } from './types';
+import type { ResolvedReason, ItemType } from './types.ts';
 
 export interface ComposeInput {
   reason: ResolvedReason;

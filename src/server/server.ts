@@ -1,175 +1,63 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { context, reddit, redis } from "@devvit/web/server";
-import type {
-  PartialJsonValue,
-  TriggerResponse,
-  UiResponse,
-} from "@devvit/web/shared";
-import {
-  ApiEndpoint,
-  type DecrementRequest,
-  type DecrementResponse,
-  type IncrementRequest,
-  type IncrementResponse,
-  type InitResponse,
-} from "../shared/api.ts";
 import { once } from "node:events";
+import { Endpoint } from "../shared/api.ts";
+import { handleModAction, handleAutomodFilter, handleModMail } from "./triggers.ts";
+import { lookupUserMenu, lookupUserForm, recentLogMenu } from "./menus.ts";
 
-export async function serverOnRequest(
-  req: IncomingMessage,
-  rsp: ServerResponse,
-): Promise<void> {
+export async function serverOnRequest(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
   try {
-    await onRequest(req, rsp);
+    await route(req, rsp);
   } catch (err) {
     const msg = `server error; ${err instanceof Error ? err.stack : err}`;
     console.error(msg);
-    writeJSON<ErrorResponse>(500, { error: msg, status: 500 }, rsp);
+    writeJSON(500, { error: msg }, rsp);
   }
 }
 
-async function onRequest(
-  req: IncomingMessage,
-  rsp: ServerResponse,
-): Promise<void> {
-  const url = req.url;
-
-  if (!url || url === "/") {
-    writeJSON<ErrorResponse>(404, { error: "not found", status: 404 }, rsp);
-    return;
-  }
-
-  // --- Receipts day-1 spike: log removal/modmail trigger payloads so we can
-  // confirm which triggers fire and what fields they carry. Removed once the
-  // real pipeline is wired. ---
-  if (url.startsWith("/internal/triggers/")) {
-    const payload = await readJSON<unknown>(req).catch(() => ({}));
-    console.log(`[receipts-spike] ${url}: ${JSON.stringify(payload)}`);
-    writeJSON(200, {}, rsp);
-    return;
-  }
-
-  const endpoint = url as ApiEndpoint;
-
-  let body: ApiResponse | UiResponse | ErrorResponse;
-  switch (endpoint) {
-    case ApiEndpoint.Init:
-      body = await onInit();
-      break;
-    case ApiEndpoint.Increment:
-      body = await onIncrement(req);
-      break;
-    case ApiEndpoint.Decrement:
-      body = await onDecrement(req);
-      break;
-    case ApiEndpoint.OnPostCreate:
-      body = await onMenuNewPost();
-      break;
-    case ApiEndpoint.OnAppInstall:
-      body = await onAppInstall();
-      break;
+async function route(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
+  const url = req.url ?? "";
+  switch (url) {
+    case Endpoint.OnModAction:
+      await handleModAction(await readJSON(req));
+      return writeJSON(200, {}, rsp);
+    case Endpoint.OnAutomodFilterPost:
+      await handleAutomodFilter(await readJSON(req), "post");
+      return writeJSON(200, {}, rsp);
+    case Endpoint.OnAutomodFilterComment:
+      await handleAutomodFilter(await readJSON(req), "comment");
+      return writeJSON(200, {}, rsp);
+    case Endpoint.OnModMail:
+      await handleModMail(await readJSON(req));
+      return writeJSON(200, {}, rsp);
+    case Endpoint.OnAppInstall:
+      return writeJSON(200, {}, rsp);
+    case Endpoint.MenuLookupUser:
+      return writeJSON(200, await lookupUserMenu(), rsp);
+    case Endpoint.FormLookupUser:
+      return writeJSON(200, await lookupUserForm(await readJSON(req)), rsp);
+    case Endpoint.MenuRecentLog:
+      return writeJSON(200, await recentLogMenu(), rsp);
     default:
-      endpoint satisfies never;
-      body = { error: "not found", status: 404 };
-      break;
+      return writeJSON(404, { error: "not found" }, rsp);
   }
-
-  writeJSON<PartialJsonValue>("status" in body ? body.status : 200, body, rsp);
 }
 
-type ApiResponse = InitResponse | IncrementResponse | DecrementResponse;
-
-type ErrorResponse = {
-  error: string;
-  status: number;
-};
-
-function getPostId(): string {
-  if (!context.postId) {
-    throw Error("no post ID");
-  }
-  return context.postId;
-}
-
-function getPostCountKey(postId: string): string {
-  return `count:${postId}`;
-}
-
-async function onInit(): Promise<InitResponse> {
-  const postId = getPostId();
-  const count = Number((await redis.get(getPostCountKey(postId))) ?? 0);
-  return {
-    type: "init",
-    postId,
-    count,
-    username: context.username ?? "user",
-  };
-}
-
-async function onIncrement(req: IncomingMessage): Promise<IncrementResponse> {
-  const postId = getPostId();
-  const { amount } = await readJSON<IncrementRequest>(req).catch(() => ({
-    amount: 1,
-  }));
-  const incrementBy = Number.isFinite(amount) ? amount : 1;
-  const count = await redis.incrBy(getPostCountKey(postId), incrementBy);
-  return {
-    type: "increment",
-    postId,
-    count,
-  };
-}
-
-async function onDecrement(req: IncomingMessage): Promise<DecrementResponse> {
-  const postId = getPostId();
-  const { amount } = await readJSON<DecrementRequest>(req).catch(() => ({
-    amount: 1,
-  }));
-  const parsedAmount = typeof amount === "number" ? amount : Number(amount);
-  const decrementBy = Number.isFinite(parsedAmount) ? parsedAmount : 1;
-  const count = Number(
-    await redis.incrBy(getPostCountKey(postId), -decrementBy),
-  );
-  return {
-    type: "decrement",
-    postId,
-    count,
-  };
-}
-
-async function onMenuNewPost(): Promise<UiResponse> {
-  const post = await reddit.submitCustomPost({ title: context.appName });
-  return {
-    showToast: { text: `Post ${post.id} created.`, appearance: "success" },
-    navigateTo: post.url,
-  };
-}
-
-async function onAppInstall(): Promise<TriggerResponse> {
-  await reddit.submitCustomPost({
-    title: "grantscribe",
-  });
-
-  return {};
-}
-
-function writeJSON<T extends PartialJsonValue>(
-  status: number,
-  json: Readonly<T>,
-  rsp: ServerResponse,
-): void {
+function writeJSON(status: number, json: unknown, rsp: ServerResponse): void {
   const body = JSON.stringify(json);
-  const len = Buffer.byteLength(body);
   rsp.writeHead(status, {
-    "Content-Length": len,
+    "Content-Length": Buffer.byteLength(body),
     "Content-Type": "application/json",
   });
   rsp.end(body);
 }
 
-async function readJSON<T>(req: IncomingMessage): Promise<T> {
+async function readJSON(req: IncomingMessage): Promise<Record<string, unknown>> {
   const chunks: Uint8Array[] = [];
   req.on("data", (chunk) => chunks.push(chunk));
   await once(req, "end");
-  return JSON.parse(`${Buffer.concat(chunks)}`);
+  try {
+    return JSON.parse(`${Buffer.concat(chunks)}`);
+  } catch {
+    return {};
+  }
 }

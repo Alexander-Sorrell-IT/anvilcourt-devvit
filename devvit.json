@@ -1,18 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "grantscribe",
-  "post": {
-    "dir": "public",
-    "entrypoints": {
-      "default": {
-        "inline": true,
-        "entry": "splash.html"
-      },
-      "game": {
-        "entry": "game.html"
-      }
-    }
-  },
   "server": {
     "dir": "dist/server",
     "entry": "index.js"
@@ -20,13 +8,23 @@
   "menu": {
     "items": [
       {
-        "label": "Create a new post",
-        "description": "grantscribe",
+        "label": "Receipts: look up user",
+        "description": "Show a user's removal + appeal history",
         "location": "subreddit",
         "forUserType": "moderator",
-        "endpoint": "/internal/menu/post-create"
+        "endpoint": "/internal/menu/lookup-user"
+      },
+      {
+        "label": "Receipts: recent removals",
+        "description": "Show the most recent logged removals",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/recent-log"
       }
     ]
+  },
+  "forms": {
+    "lookupUser": "/internal/form/lookup-user"
   },
   "triggers": {
     "onAppInstall": "/internal/on-app-install",
