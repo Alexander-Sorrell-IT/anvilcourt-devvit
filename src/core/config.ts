@@ -13,8 +13,15 @@ export interface ReceiptsConfig {
   explainSources: { modRemovals: boolean; automodFilter: boolean; automodRemove: boolean; spamFilter: boolean };
 }
 
-const bool = (v: unknown, d: boolean) => (typeof v === 'boolean' ? v : d);
-const str = (v: unknown, d: string) => (typeof v === 'string' && v.length ? v : d);
+const bool = (v: unknown, d: boolean): boolean => {
+  const x = Array.isArray(v) ? v[0] : v;
+  return typeof x === 'boolean' ? x : d;
+};
+// Devvit select settings can come back as a single-element array; unwrap it.
+const str = (v: unknown, d: string): string => {
+  const x = Array.isArray(v) ? v[0] : v;
+  return typeof x === 'string' && x.length ? x : d;
+};
 
 export function parseConfig(raw: Record<string, unknown>): ReceiptsConfig {
   return {

@@ -15,4 +15,8 @@ describe('parseConfig', () => {
     expect(c.deliveryChannel).toBe('modmail');
     expect(c.perReasonOptOut).toEqual(['spam', 'ban evasion']);
   });
+  it('unwraps select settings returned as a single-element array', () => {
+    const c = parseConfig({ deliveryChannel: ['modmail'] });
+    expect(c.deliveryChannel).toBe('modmail');
+  });
 });

@@ -40,6 +40,65 @@
     },
     "redis": true
   },
+  "settings": {
+    "subreddit": {
+      "deliveryChannel": {
+        "type": "select",
+        "label": "Where to send removal explanations",
+        "helpText": "An in-place comment on the item, a modmail to the author (the appeal channel), or both.",
+        "options": [
+          { "label": "Comment + modmail (recommended)", "value": "both" },
+          { "label": "In-place comment only", "value": "comment" },
+          { "label": "Modmail only", "value": "modmail" },
+          { "label": "Off", "value": "off" }
+        ],
+        "defaultValue": ["both"]
+      },
+      "appealsEnabled": {
+        "type": "boolean",
+        "label": "Include an appeal path",
+        "helpText": "Adds a 'reply here if you think this is a mistake' line. Appeals go to a human moderator; the bot never overturns removals.",
+        "defaultValue": true
+      },
+      "appealInstructions": {
+        "type": "paragraph",
+        "label": "Appeal instructions",
+        "defaultValue": "If you think this was a mistake, reply to this message and a moderator will review it. (This is an automated notice; a human makes the final call.)"
+      },
+      "messageTemplate": {
+        "type": "paragraph",
+        "label": "Explanation template",
+        "helpText": "Tokens: {{itemType}} {{subreddit}} {{reason}} {{rule}} {{appeal}}",
+        "defaultValue": "Your {{itemType}} in r/{{subreddit}} was removed.\n\nReason: {{reason}}\n\n{{appeal}}"
+      },
+      "perReasonOptOut": {
+        "type": "string",
+        "label": "Do NOT notify for these reasons (comma-separated)",
+        "helpText": "E.g. spam, ban evasion — reasons where tipping off the author is undesirable.",
+        "defaultValue": ""
+      },
+      "explainModRemovals": {
+        "type": "boolean",
+        "label": "Explain moderator removals",
+        "defaultValue": true
+      },
+      "explainAutomodFilter": {
+        "type": "boolean",
+        "label": "Explain AutoModerator silent filters",
+        "defaultValue": true
+      },
+      "explainAutomodRemove": {
+        "type": "boolean",
+        "label": "Explain AutoModerator removals",
+        "defaultValue": true
+      },
+      "explainSpamFilter": {
+        "type": "boolean",
+        "label": "Explain Reddit spam-filter removals",
+        "defaultValue": false
+      }
+    }
+  },
   "scripts": {
     "dev": "node --experimental-strip-types ./tools/build.ts --watch",
     "build": "node --experimental-strip-types ./tools/build.ts --minify"
