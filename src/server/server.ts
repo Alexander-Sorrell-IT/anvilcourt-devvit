@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { once } from "node:events";
 import { Endpoint } from "../shared/api.ts";
-import { handleModAction, handleAutomodFilter, handleModMail } from "./triggers.ts";
+import { handleModAction, handleAutomodFilter, handleModMail, handleAppInstall } from "./triggers.ts";
 import { lookupUserMenu, lookupUserForm, recentLogMenu } from "./menus.ts";
 
 export async function serverOnRequest(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
@@ -30,6 +30,7 @@ async function route(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
       await handleModMail(await readJSON(req));
       return writeJSON(200, {}, rsp);
     case Endpoint.OnAppInstall:
+      await handleAppInstall();
       return writeJSON(200, {}, rsp);
     case Endpoint.MenuLookupUser:
       return writeJSON(200, await lookupUserMenu(), rsp);

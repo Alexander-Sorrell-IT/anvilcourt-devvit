@@ -1,6 +1,6 @@
 // Thin adapters: parse Devvit trigger payloads into a RemovalEvent and run the
 // pipeline. Payload field paths confirmed via the day-1 spike (see SPIKE_RESULTS.md).
-import { reddit } from "@devvit/web/server";
+import { context, reddit } from "@devvit/web/server";
 import type { RemovalEvent, RemovalSource, ItemType } from "../core/types.ts";
 import { processRemoval } from "./pipeline.ts";
 import { getUserRecords, setAppealStatus } from "./audit.ts";
@@ -8,6 +8,27 @@ import { isAppealReply, pickReceiptToFlag } from "../core/appealMatch.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Payload = Record<string, any>;
+
+// On install, post a one-time welcome to the mod team explaining the app is active.
+export async function handleAppInstall(): Promise<void> {
+  try {
+    const subredditId = context.subredditId;
+    if (!subredditId) return;
+    await reddit.modMail.createModDiscussionConversation({
+      subject: "Receipts is now active",
+      bodyMarkdown:
+        "**Receipts is installed and running.**\n\n" +
+        "When a post or comment is removed — by a mod, by AutoModerator's silent filter, by an AutoMod remove rule, or by Reddit's spam filter — the author now automatically gets a clear, rule-cited explanation with an appeal option, and the decision is logged.\n\n" +
+        "- **Look up a user's removals:** subreddit menu → *Receipts: look up user*\n" +
+        "- **Recent removals:** subreddit menu → *Receipts: recent removals*\n" +
+        "- **Configure** delivery channel, message text, appeals, and which sources to explain in this app's settings.\n\n" +
+        "Appeals come to *you* — Receipts never overturns a removal.",
+      subredditId: subredditId as `t5_${string}`,
+    });
+  } catch (e) {
+    console.error("[receipts] welcome modmail failed:", e);
+  }
+}
 
 const REMOVE_ACTIONS = new Set(["removelink", "removecomment", "spamlink", "spamcomment"]);
 
