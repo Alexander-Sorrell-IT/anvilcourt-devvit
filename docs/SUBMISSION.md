@@ -2,6 +2,7 @@
 
 **Category:** Best New Mod Tool
 **App listing:** https://developers.reddit.com/apps/grantscribe  *(confirm/update after publish)*
+**Source:** https://github.com/Alexander-Sorrell-IT/receipts-devvit
 **Reddit username(s):** u/AlexanderSorrell-IT
 **Built with:** Reddit Developer Platform (Devvit Web), TypeScript, Redis. Deterministic — no LLM, no external services.
 
@@ -9,23 +10,32 @@
 
 ## Tool Overview
 
-**Receipts ends silent moderation: every content removal automatically explains itself to the user, and lands in a searchable, mod-only audit log.**
+**Receipts ends silent moderation. Every content removal — by a mod, by AutoModerator's silent `filter`, by an AutoMod remove rule, or by Reddit's spam filter — automatically explains itself to the author, with a built-in appeal channel and a searchable, mod-only audit log.**
 
-On Reddit today, content vanishes without a word. AutoModerator's `filter` action quietly sends posts and comments to the modqueue and tells the author *nothing*; most subreddits never write per-rule comment text, so legitimate users assume they were censored — and leave. Native Removal Reasons exist, but they're manual (a mod must click and pick a reason every time) and don't cover AutoMod at all. The result is a flood of *"why was my post removed?"* modmail and the slow, invisible attrition of good contributors.
+The problem in one paragraph: AutoModerator's `filter` action sends posts to the modqueue and tells the author *nothing*. Native Removal Reasons require a mod to click and pick on every removal and don't cover AutoMod at all. The result is a flood of *"why was my post removed?"* modmail, daily appeal archaeology, and the invisible attrition of good contributors who assumed they were censored. Receipts fixes all three at once.
 
-**What Receipts does, automatically, the moment anything is removed:**
+**The pipeline, fully automatic:**
 
-1. **Detects every removal** — by a moderator, by AutoMod's silent `filter`, by an AutoMod remove rule, or by Reddit's spam filter — via the `ModAction`, `AutomoderatorFilterPost`, and `AutomoderatorFilterComment` triggers (deduplicated so one removal = one action).
-2. **Determines *why*** through a deterministic 4-tier fallback: the AutoMod filter reason → the mod log (the mod-selected removal reason or AutoMod's `action_reason`) → the subreddit's configured removal-reason text → a clear generic notice.
-3. **Explains it to the author** — a stickied, distinguished in-place comment and/or a modmail, each carrying a *"reply here if you think this is a mistake"* appeal line.
-4. **Closes the loop** — because the explanation is delivered by modmail, the user's reply lands directly in the mod inbox; Receipts flags it as an appeal. **A human moderator always makes the final call — the bot never overturns a removal.**
-5. **Logs every decision** to a searchable, mod-only audit trail. Two mod menu actions — *"Receipts: look up user"* and *"Receipts: recent removals"* — turn appeal-handling from a two-minute archaeology dig into a two-second lookup.
+1. **Detect + reason.** Catches every removal across all four sources via `ModAction`, `AutomoderatorFilterPost`, and `AutomoderatorFilterComment` triggers (deduplicated so one removal = one action). Resolves *why* through a deterministic 4-tier fallback: AutoMod filter reason → mod log (selected removal reason or `action_reason`) → configured removal-reason text → clear generic notice.
+2. **Explain.** Posts a stickied, distinguished in-place comment and/or a modmail to the author, each carrying a *"reply here if you think this is a mistake"* appeal line.
+3. **Appeal loop.** Modmail replies land in the mod inbox and Receipts flags them as appeals. **A human moderator always makes the final call — the bot never overturns a removal.**
+4. **Audit.** Every decision lands in a searchable, mod-only log. Two menu actions — *"look up user"* and *"recent removals"* — turn appeal handling from two minutes of profile forensics into a two-second lookup.
 
-**For moderators:** install in two clicks; it works immediately with sensible defaults. A subreddit settings screen lets mods choose the delivery channel, edit the message template, toggle which removal sources are explained, turn appeals on/off, and suppress notifications for sensitive reasons (e.g. spam) — no code, no YAML.
+**For moderators:** install in two clicks, works immediately. A settings screen exposes delivery channel, message template, per-source toggles, appeals on/off, and per-reason opt-out (e.g. spam, ban evasion) — no code, no YAML.
 
-**For users:** instead of silence, they get a clear, polite, rule-cited explanation and a real way to be heard.
+**For users:** instead of silence, a clear, polite, rule-cited explanation and a real way to be heard.
 
-**Why it's new to Devvit:** a review of 36+ existing Devvit mod apps found none that automatically explain AutoMod's *silent filter* removals or maintain a unified removal+reason audit log. Receipts is the first tool to make moderation *show its work* — across every removal source — with zero configuration.
+### What exists today vs. Receipts
+
+| Removal source | What the author sees today | With Receipts |
+|---|---|---|
+| Mod removes with a Removal Reason | A message — *if* the mod clicks through | Same message + appeal CTA + audit entry |
+| Mod removes (no reason set) | Nothing | Rule-cited explanation + appeal + audit |
+| AutoMod `remove` rule | Per-rule `comment:` text *if configured* (rare) | Resolved reason + appeal + audit |
+| **AutoMod `filter` rule** | **Nothing — silent modqueue** | **Resolved reason + appeal + audit** |
+| Reddit spam filter | Nothing | Configurable (off by default — avoids tipping spammers) |
+
+**Why it's new to Devvit:** a review of 36+ existing Devvit mod apps found none that automatically explain AutoMod's *silent filter* removals or maintain a unified removal+reason audit log across all four sources. Receipts is the first tool to make moderation *show its work* — every removal, every source, zero configuration.
 
 ---
 
@@ -50,5 +60,7 @@ Net: significant, daily moderator time saved on the highest-frequency chores, pl
 ---
 
 ## Notes for judges
-- Deterministic and reliable at scale: no AI, no external API calls, no auto-banning. Removals stay mod-driven; Receipts only *explains* and *logs*.
-- Privacy-respecting: the audit is mod-only; user-facing messages state only the reason the author is entitled to know.
+- **Deterministic, no surprises.** No AI, no external API calls, no auto-banning. Removals stay mod-driven; Receipts only *explains* and *logs*. Same input → same output, every time.
+- **Live and validated end-to-end** on r/alexander_sorrell_it: real removal → reason resolved from mod log → in-place explanation comment → modmail → appeal flag → audit entry visible via mod menu.
+- **Privacy-respecting.** Audit is mod-only; user-facing messages state only the reason the author is entitled to know. Spam reasons opt-out by default so we don't tip off bad actors.
+- **Pure-core architecture.** Decision logic is unit-tested in `src/core/` independent of the platform; the Devvit layer (`src/server/`) is thin adapter glue. 17 unit tests, `tsc` clean.
