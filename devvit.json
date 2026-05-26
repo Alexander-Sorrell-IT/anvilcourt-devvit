@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "receipts",
+  "name": "anvilcourt",
   "server": {
     "dir": "dist/server",
     "entry": "index.js"
@@ -8,35 +8,35 @@
   "menu": {
     "items": [
       {
-        "label": "Receipts: look up user",
+        "label": "Anvil Court: look up user",
         "description": "Show a user's removal + appeal history",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/lookup-user"
       },
       {
-        "label": "Receipts: recent removals",
+        "label": "Anvil Court: recent removals",
         "description": "Show the most recent logged removals",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/recent-log"
       },
       {
-        "label": "Receipts: case file by rule",
+        "label": "Anvil Court: case file by rule",
         "description": "Every removal grouped by rule — precedent at a glance",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/case-file"
       },
       {
-        "label": "Receipts: publish public mirror",
-        "description": "Refresh the aggregate, anonymized case-law page at /wiki/receipts",
+        "label": "Anvil Court: publish public mirror",
+        "description": "Refresh the aggregate, anonymized case-law page at /wiki/anvil-court",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/publish-mirror"
       },
       {
-        "label": "Receipts: precedent for this item",
+        "label": "Anvil Court: precedent for this item",
         "description": "See the rule's prior outcomes for this item before you decide",
         "location": ["post", "comment"],
         "forUserType": "moderator",
@@ -122,7 +122,7 @@
       "automodFilterDailyCap": {
         "type": "string",
         "label": "Daily AutoMod-filter explanations per author (0 = unlimited)",
-        "helpText": "Hard ceiling on how many times Receipts will explain AutoMod silent-filter removals to the same author per UTC day. Protects against turning the silent filter into a spammer feedback channel. Per-author, per-subreddit.",
+        "helpText": "Hard ceiling on how many times Anvil Court will explain AutoMod silent-filter removals to the same author per UTC day. Protects against turning the silent filter into a spammer feedback channel. Per-author, per-subreddit.",
         "defaultValue": "3"
       }
     }

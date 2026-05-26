@@ -1,4 +1,4 @@
-# Receipts — 60-second demo recording prescription
+# Anvil Court — 60-second demo recording prescription
 
 **Goal:** one continuous take. Five complete loops. **One** 4-second "oh-shit" beat the judge will remember.
 
@@ -16,7 +16,7 @@ That single frame is where the judge realizes the substrate changed. Removal exp
 
 ## 2. The dead beat to compress
 
-The click on the *"Receipts: publish public mirror"* menu item. The menu click is plumbing; the wiki page is the artifact. **Don't dwell on the click — jump straight from `/reverse` confirmation to the wiki tab.** Step 2's stickied explanation comment also looks visually like a stock AutoMod sticky — don't linger there.
+The click on the *"Anvil Court: publish public mirror"* menu item. The menu click is plumbing; the wiki page is the artifact. **Don't dwell on the click — jump straight from `/reverse` confirmation to the wiki tab.** Step 2's stickied explanation comment also looks visually like a stock AutoMod sticky — don't linger there.
 
 ## 3. Recording prescription (per beat)
 
@@ -32,7 +32,7 @@ The click on the *"Receipts: publish public mirror"* menu item. The menu click i
 - Voiceover: *"User replies. Watch the mod inbox."*
 
 ### Beat 3 — THE OH-SHIT BEAT (~4 sec, hold)
-- Switch to the mod-team modmail tab. The conversation now has an internal note from Receipts.
+- Switch to the mod-team modmail tab. The conversation now has an internal note from Anvil Court.
 - **Zoom to ~125%** so the bold headline fills the horizontal width.
 - **Cursor: parked dead-still in the left margin next to the headline. Do not move it.**
 - **Hold 4 full seconds.** No scroll, no cursor movement, nothing.
@@ -45,7 +45,7 @@ The click on the *"Receipts: publish public mirror"* menu item. The menu click i
 - Voiceover: *"One reply — slash-reverse — restores the content, DMs the user, and logs the decision as precedent for the next appeal."*
 
 ### Beat 5 — Public ledger (~5 sec)
-- **Cut directly to the wiki tab** at `/r/alexander_sorrell_it/wiki/receipts`. Page is already loaded (pre-open it).
+- **Cut directly to the wiki tab** at `/r/alexander_sorrell_it/wiki/anvil-court`. Page is already loaded (pre-open it).
 - Pan slowly down the per-rule table. The "No spam" row now reads `(4 reversed, 31%)` (was 3/23%).
 - Voiceover: *"And every reversal lands in the sub's public, anonymized case-law ledger. No usernames. No content. Counts only — the docket statistics the sub stands behind in public."*
 
@@ -69,9 +69,9 @@ The headline must read `REVERSAL RATE 23% (3/13)`, not `0/0`. Seed the corpus fi
 
 5. **Dry run.** Before hitting record, do beats 1–3 once on a 15th throwaway post to verify the panel emits the exact headline string. If `total` or `overturned` drift by one from the overlay text in beat 3, the overlay lies.
 
-6. **Pre-open browser tabs** in this order: (a) mod feed for r/alexander_sorrell_it, (b) appellant's modmail inbox, (c) mod team modmail, (d) `/r/alexander_sorrell_it/wiki/receipts`. Pin them. Tab-switching shows judge speed; mouse-to-bookmark shows search.
+6. **Pre-open browser tabs** in this order: (a) mod feed for r/alexander_sorrell_it, (b) appellant's modmail inbox, (c) mod team modmail, (d) `/r/alexander_sorrell_it/wiki/anvil-court`. Pin them. Tab-switching shows judge speed; mouse-to-bookmark shows search.
 
-7. **Pre-publish the Mod Mirror once** with the seeded 13 receipts already in place. That way the wiki tab in beat 5 already exists; the recording just shows it *updated*, not *appearing for the first time*.
+7. **Pre-publish the Mod Mirror once** with the seeded 13 records already in place. That way the wiki tab in beat 5 already exists; the recording just shows it *updated*, not *appearing for the first time*.
 
 ## 6. What to bring to the screen recording
 
@@ -84,7 +84,7 @@ The headline must read `REVERSAL RATE 23% (3/13)`, not `0/0`. Seed the corpus fi
 ## 7. Screenshots (separate from the video, 2-3 needed for the Devpost listing)
 
 1. The precedent panel in the modmail thread, full conversation visible, **REVERSAL RATE 23% (3/13)** headline prominent.
-2. The Mod Mirror wiki page at `/wiki/receipts`, with the summary header and 5+ rules in the per-rule table.
+2. The Mod Mirror wiki page at `/wiki/anvil-court`, with the summary header and 5+ rules in the per-rule table.
 3. (Optional) The Case File menu rendering with rule list + counts. Skip if 1 + 2 are sharp.
 
 ## 8. If something goes wrong mid-take

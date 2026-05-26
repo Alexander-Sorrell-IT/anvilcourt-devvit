@@ -27,7 +27,7 @@ export function makeReasonLookups(subreddit: string): ReasonLookups {
         }
         return undefined;
       } catch (err) {
-        console.error("[receipts] modLogReason failed:", err);
+        console.error("[anvilcourt] modLogReason failed:", err);
         return undefined;
       }
     },
@@ -40,7 +40,7 @@ export function makeReasonLookups(subreddit: string): ReasonLookups {
         const match = reasons.find((r) => r.title === ruleRef || r.id === ruleRef);
         return match?.message;
       } catch (err) {
-        console.error("[receipts] ruleConfigText failed:", err);
+        console.error("[anvilcourt] ruleConfigText failed:", err);
         return undefined;
       }
     },

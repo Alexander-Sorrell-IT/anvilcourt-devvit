@@ -1,6 +1,6 @@
 #!/usr/bin/env -S node --experimental-strip-types
 
-// Bundles the server to dist/server. Receipts is a background mod tool with no
+// Bundles the server to dist/server. Anvil Court is a background mod tool with no
 // custom-post UI, so there is no client build.
 //
 // build.ts [--minify] [--watch]

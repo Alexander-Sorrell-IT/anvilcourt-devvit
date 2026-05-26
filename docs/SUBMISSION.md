@@ -1,8 +1,8 @@
-# Devpost Submission — Receipts
+# Devpost Submission — Anvil Court
 
 **Category:** Best New Mod Tool
-**App listing:** https://developers.reddit.com/apps/receipts  *(confirm/update after publish)*
-**Source:** https://github.com/Alexander-Sorrell-IT/receipts-devvit
+**App listing:** https://developers.reddit.com/apps/anvilcourt  *(confirm/update after publish)*
+**Source:** https://github.com/Alexander-Sorrell-IT/anvilcourt-devvit
 **Reddit username(s):** u/AlexanderSorrell-IT
 **Built with:** Reddit Developer Platform (Devvit Web), TypeScript, Redis. Deterministic — no LLM, no external services.
 
@@ -10,13 +10,13 @@
 
 ## Tool Overview
 
-**Receipts is the case-law engine for Reddit moderation. Every removal becomes precedent. Every appeal lands in the mod inbox with the rule's track record already attached. One reply — `/reverse` — restores the content, DMs the user, and logs the outcome as precedent for the next appeal.**
+**Anvil Court is the case-law engine for Reddit moderation. Every removal becomes precedent. Every appeal lands in the mod inbox with the rule's track record already attached. One reply — `/reverse` — restores the content, DMs the user, and logs the outcome as precedent for the next appeal.**
 
-Receipts catches every removal across all four sources — a mod's removal, AutoModerator's silent `filter`, an AutoMod `remove` rule, or Reddit's spam filter — auto-explains it to the author in plain language, runs a built-in appeal channel through modmail, and treats the resulting decision corpus as a living body of precedent that informs future moderation.
+Anvil Court catches every removal across all four sources — a mod's removal, AutoModerator's silent `filter`, an AutoMod `remove` rule, or Reddit's spam filter — auto-explains it to the author in plain language, runs a built-in appeal channel through modmail, and treats the resulting decision corpus as a living body of precedent that informs future moderation.
 
 ### The pitch in one table
 
-| Removal source | What the author sees today | With Receipts |
+| Removal source | What the author sees today | With Anvil Court |
 |---|---|---|
 | Mod removes with a Removal Reason | A message — *if* the mod clicks through | Same message + appeal CTA + case file entry |
 | Mod removes (no reason set) | Nothing | Rule-cited explanation + appeal + case file |
@@ -24,25 +24,25 @@ Receipts catches every removal across all four sources — a mod's removal, Auto
 | **AutoMod `filter` rule** | **Nothing — silent modqueue** | **Resolved reason + appeal + case file** |
 | Reddit spam filter | Nothing | Configurable (off by default — avoids tipping spammers) |
 | **User appeals** | DMs, modmails, meta-posts — chaos | **Internal mod-only note shows: rule's prior outcomes, reversal rate, appellant history. One `/reverse` reply closes the loop.** |
-| **Public accountability** | Nothing — moderation is a black box | **Mod Mirror: aggregate, anonymized case-law page auto-published to `/wiki/receipts`. Per-rule totals, reversal rates, 30-day activity. No usernames or content — just the docket statistics. The sub stands behind its moderation, in public.** |
+| **Public accountability** | Nothing — moderation is a black box | **Mod Mirror: aggregate, anonymized case-law page auto-published to `/wiki/anvil-court`. Per-rule totals, reversal rates, 30-day activity. No usernames or content — just the docket statistics. The sub stands behind its moderation, in public.** |
 
 ### Why this is paradigm-shift, not incremental
 
 Every mod tool on the platform today treats removals as one-off events. The result is the same chore, every day: a mod opens an appeal modmail and starts an *archaeology dig* — read the user's history, scroll their profile, hunt for the original removal, try to remember *"have we reversed this rule before, and what did we say?"*
 
-Receipts changes the substrate. Because every removal is logged with a deterministic reason, and every appeal links back to that record, and every reversal updates the same audit log, **the corpus of past decisions becomes a queryable body of moderation case law.** Open any new appeal and the precedent panel renders automatically:
+Anvil Court changes the substrate. Because every removal is logged with a deterministic reason, and every appeal links back to that record, and every reversal updates the same audit log, **the corpus of past decisions becomes a queryable body of moderation case law.** Open any new appeal and the precedent panel renders automatically:
 
-> *Across **47** prior receipts on this rule: **12 overturned** (26%), 28 upheld, 3 appealed (open), 4 not appealed.*
+> *Across **47** prior records on this rule: **12 overturned** (26%), 28 upheld, 3 appealed (open), 4 not appealed.*
 > *Recent reversals on this rule: 2026-05-21 — u/example1, 2026-05-12 — u/example2*
-> *This appellant (u/alice): 2 prior receipt(s), 1 previously overturned.*
+> *This appellant (u/alice): 2 prior record(s), 1 previously overturned.*
 > *To reverse this removal: reply `/reverse` (add a note for the user, e.g. `/reverse posted in error`).*
 
-That panel is mod-only (internal modmail note). The mod decides with full context, replies `/reverse`, and Receipts:
+That panel is mod-only (internal modmail note). The mod decides with full context, replies `/reverse`, and Anvil Court:
 1. Approves the item on Reddit (content restored).
 2. DMs the appellant with a rule-cited reversal notice.
 3. Logs the decision as *overturned* — feeding the next appeal's precedent panel.
 
-Of the 36 most-used open-source Devvit mod apps we reviewed (the fsvreddit, PitchforkAssistant, and shiruken portfolios plus the App Directory's top mod-tools tab), individual pieces exist but the synthesis does not: **none combine automatic silent-filter explanations + a unified 4-source audit log + queryable precedent on appeal**. Receipts is the first mod tool to make moderation *show its work* — and the first to let mods *rule with the corpus, not from memory.*
+Of the 36 most-used open-source Devvit mod apps we reviewed (the fsvreddit, PitchforkAssistant, and shiruken portfolios plus the App Directory's top mod-tools tab), individual pieces exist but the synthesis does not: **none combine automatic silent-filter explanations + a unified 4-source audit log + queryable precedent on appeal**. Anvil Court is the first mod tool to make moderation *show its work* — and the first to let mods *rule with the corpus, not from memory.*
 
 ### The pipeline, fully automatic
 
@@ -50,10 +50,10 @@ Of the 36 most-used open-source Devvit mod apps we reviewed (the fsvreddit, Pitc
 2. **Explain.** Stickied, distinguished in-place comment and/or modmail to the author, each carrying an appeal line. **Configurable per-author daily rate cap** on AutoMod silent-filter explanations (default 3/day) — protects against turning the silent filter into a spammer feedback channel.
 3. **Appeal + precedent.** Modmail reply triggers (a) appeal flagging on the record and (b) an internal mod-only precedent panel rendered into the same conversation, leading with the headline reversal-rate stat so the preview tells the story even when the note is collapsed. *A human moderator always makes the final call — the bot never overturns a removal on its own.*
 4. **Reverse / uphold.** `/reverse [note]` in any appeal thread approves the content, DMs the user, logs the outcome. `/uphold` records the decision without reverting. Either way, the case file grows.
-5. **Look it up.** Five mod menu surfaces — three subreddit-level (*look up user*, *recent removals*, *case file by rule*) plus *publish public mirror*, plus a per-item *Receipts: precedent for this item* mod action on every post and comment in the queue. **Case law follows the moderation lifecycle: triage → appeal → public ledger.** Three surfaces, one substrate.
-6. **Mod Mirror — public case law.** A single menu click publishes (or refreshes) an aggregate, anonymized public page at `/wiki/receipts` — totals, reversal rate, last-30-day activity, per rule. **No usernames, no item bodies, no permalinks.** The sub's moderation gets a public, automatically maintained accountability ledger.
-7. **Cold-start backfill.** On install, Receipts walks the last 90 days of the mod log and seeds the case-law corpus retroactively. The precedent panel works from day one — not after weeks of new data.
-8. **Self-serve transparency.** Users DM the sub with `/my-receipts` to see their own history, no mod involvement.
+5. **Look it up.** Five mod menu surfaces — three subreddit-level (*look up user*, *recent removals*, *case file by rule*) plus *publish public mirror*, plus a per-item *Anvil Court: precedent for this item* mod action on every post and comment in the queue. **Case law follows the moderation lifecycle: triage → appeal → public ledger.** Three surfaces, one substrate.
+6. **Mod Mirror — public case law.** A single menu click publishes (or refreshes) an aggregate, anonymized public page at `/wiki/anvil-court` — totals, reversal rate, last-30-day activity, per rule. **No usernames, no item bodies, no permalinks.** The sub's moderation gets a public, automatically maintained accountability ledger.
+7. **Cold-start backfill.** On install, Anvil Court walks the last 90 days of the mod log and seeds the case-law corpus retroactively. The precedent panel works from day one — not after weeks of new data.
+8. **Self-serve transparency.** Users DM the sub with `/my-receipts` to see their own history, no mod involvement. *(The keyword keeps the Reddit-native phrase "got the receipts" — the brand is Anvil Court; the user vocabulary stays intuitive.)*
 
 **For moderators:** install in two clicks; works immediately. Settings screen exposes delivery channel, message template, per-source toggles, appeals on/off, and per-reason opt-out (e.g. spam, ban evasion) — no code, no YAML.
 
@@ -65,9 +65,9 @@ Of the 36 most-used open-source Devvit mod apps we reviewed (the fsvreddit, Pitc
 
 *(1–3 communities that would benefit, and how)*
 
-1. **Large default-tier subreddits** (e.g. r/AskReddit, r/news, r/explainlikeimfive — hundreds of thousands of weekly active users). These run aggressive AutoMod configs that silently filter huge volumes; *"why was my post removed?"* is consistently among the top modmail categories. Receipts deflects that modmail at the source and turns each rule into a measurable lever — mods can see *"this rule has a 41% reversal rate"* and decide whether to revise the rule itself, not just handle appeals one at a time.
+1. **Large default-tier subreddits** (e.g. r/AskReddit, r/news, r/explainlikeimfive — hundreds of thousands of weekly active users). These run aggressive AutoMod configs that silently filter huge volumes; *"why was my post removed?"* is consistently among the top modmail categories. Anvil Court deflects that modmail at the source and turns each rule into a measurable lever — mods can see *"this rule has a 41% reversal rate"* and decide whether to revise the rule itself, not just handle appeals one at a time.
 
-2. **Mid-size hobby & niche communities** (10k–200k members — e.g. a game, hardware, or fitness sub). These rely on a handful of volunteer mods and can't afford to lose engaged contributors. Receipts stops the silent attrition of good users whose posts trip a keyword filter, by telling them exactly what to fix, *and* shows the mod team which rules are actually catching legitimate posts (reversal rate) versus spam (uphold rate).
+2. **Mid-size hobby & niche communities** (10k–200k members — e.g. a game, hardware, or fitness sub). These rely on a handful of volunteer mods and can't afford to lose engaged contributors. Anvil Court stops the silent attrition of good users whose posts trip a keyword filter, by telling them exactly what to fix, *and* shows the mod team which rules are actually catching legitimate posts (reversal rate) versus spam (uphold rate).
 
 3. **Support / advice communities** (e.g. legal, medical, personal-finance advice). Removals here are sensitive and frequently appealed; consistent, documented, rule-cited explanations reduce conflict — and the precedent panel means every appeal is decided in the context of prior decisions on the same rule, instead of from individual mods' memory. A defensible, queryable audit trail when decisions are challenged.
 
@@ -83,8 +83,8 @@ Net: significant, daily moderator time saved on the highest-frequency chores, pl
 ---
 
 ## Notes for judges
-- **Deterministic, no surprises.** No AI, no external API calls, no auto-banning. Same input → same output. Removals stay mod-driven; Receipts only *explains, indexes, and on a mod's explicit `/reverse` command, restores.*
+- **Deterministic, no surprises.** No AI, no external API calls, no auto-banning. Same input → same output. Removals stay mod-driven; Anvil Court only *explains, indexes, and on a mod's explicit `/reverse` command, restores.*
 - **Live and validated end-to-end** on r/alexander_sorrell_it: real removal → reason resolved from mod log → in-place explanation comment → modmail → appeal flag → precedent panel rendered → mod replies `/reverse` → content restored + user DM'd + audit entry overturned + Case File menu shows the updated stats.
 - **Privacy-respecting.** Audit is mod-only; user-facing messages state only the reason the author is entitled to know. Spam reasons opt-out by default so we don't tip off bad actors. The precedent panel is an *internal* modmail note — never visible to the appellant.
-- **Pure-core architecture.** Decision logic and case-law primitives (`ruleKey`, `computeRuleStats`, `parseModCommand`, `rollupRule`, `renderMirrorMarkdown`, message composers) are unit-tested in `src/core/` independent of the platform; the Devvit layer (`src/server/`) is thin adapter glue. **56 unit tests**, `tsc` clean. The audit substrate composes — every Receipt already logged retroactively becomes precedent and ledger row.
-- **Demo path (60 seconds, one continuous shot):** remove a post in r/alexander_sorrell_it → stickied explanation comment appears + modmail lands → switch to the user's account, reply to appeal → switch to mod modmail, see the precedent panel render as an internal note with **REVERSAL RATE 23% (3/13)** as its headline → reply `/reverse posted in error` → cut to the user's inbox showing the reversal DM → cut to mod menu *Receipts: publish public mirror* → switch tab to `/r/alexander_sorrell_it/wiki/receipts` showing the updated public case-law table. Five complete loops in 60 seconds.
+- **Pure-core architecture.** Decision logic and case-law primitives (`ruleKey`, `computeRuleStats`, `parseModCommand`, `rollupRule`, `renderMirrorMarkdown`, message composers) are unit-tested in `src/core/` independent of the platform; the Devvit layer (`src/server/`) is thin adapter glue. **56 unit tests**, `tsc` clean. The audit substrate composes — every record already logged retroactively becomes precedent and ledger row.
+- **Demo path (60 seconds, one continuous shot):** remove a post in r/alexander_sorrell_it → stickied explanation comment appears + modmail lands → switch to the user's account, reply to appeal → switch to mod modmail, see the precedent panel render as an internal note with **REVERSAL RATE 23% (3/13)** as its headline → reply `/reverse posted in error` → cut to the user's inbox showing the reversal DM → cut to mod menu *Anvil Court: publish public mirror* → switch tab to `/r/alexander_sorrell_it/wiki/anvil-court` showing the updated public case-law table. Five complete loops in 60 seconds.

@@ -28,7 +28,7 @@ export async function lookupUserMenu(): Promise<unknown> {
     showForm: {
       name: "lookupUser",
       form: {
-        title: "Receipts — look up a user",
+        title: "Anvil Court — look up a user",
         acceptLabel: "Search",
         fields: [{ type: "string", name: "username", label: "Username (without u/)" }],
       },
@@ -44,7 +44,7 @@ export async function lookupUserForm(p: Payload): Promise<unknown> {
   if (!username) return { showToast: "Enter a username." };
 
   const records = await getUserRecords(username, 10);
-  if (!records.length) return { showToast: `No receipts for u/${username}.` };
+  if (!records.length) return { showToast: `No records for u/${username}.` };
 
   const lines = records.map(
     (r) =>
@@ -66,7 +66,7 @@ export async function caseFileMenu(): Promise<unknown> {
   const sub = activeSubName();
   const rules = sub ? await listRules(sub, 30) : [];
   if (!rules.length) {
-    return { showToast: "No rules have logged receipts yet." };
+    return { showToast: "No rules have logged records yet." };
   }
   // Build a select with up-to-30 rules; show counts inline so mods can spot the heavy hitters.
   const options = rules.slice(0, 30).map((r) => ({
@@ -79,7 +79,7 @@ export async function caseFileMenu(): Promise<unknown> {
     showForm: {
       name: "caseFile",
       form: {
-        title: "Receipts — case file by rule",
+        title: "Anvil Court — case file by rule",
         acceptLabel: "Open",
         fields: [
           {
@@ -105,7 +105,7 @@ export async function caseFileForm(p: Payload): Promise<unknown> {
 
   const records = await getRuleRecords(sub, slug, 100);
   const head = records[0];
-  if (!head) return { showToast: "No receipts for that rule." };
+  if (!head) return { showToast: "No records for that rule." };
   // Resolve display label from the first record (newest-first ordering).
   const display = head.ruleRef || head.reasonText.slice(0, 60);
   const stats = computeRuleStats(records);
@@ -148,19 +148,19 @@ export async function precedentForItemMenu(p: Payload): Promise<unknown> {
   if (!itemId) {
     return {
       showToast:
-        "Receipts: couldn't read the item id from this menu invocation. (Try the subreddit-level 'Receipts: case file by rule' instead.)",
+        "Anvil Court: couldn't read the item id from this menu invocation. (Try the subreddit-level 'Anvil Court: case file by rule' instead.)",
     };
   }
   const record = await getRecord(itemId);
   if (!record) {
     return {
       showToast:
-        `Receipts: no logged removal yet for ${itemId}. The case file is per-rule; this item may not have been removed (or was removed before the app was installed and didn't appear in backfill).`,
+        `Anvil Court: no logged removal yet for ${itemId}. The case file is per-rule; this item may not have been removed (or was removed before the app was installed and didn't appear in backfill).`,
     };
   }
   const sub = (record.subreddit ?? activeSubName() ?? "").trim();
   if (!sub) {
-    return { showToast: "Receipts: subreddit context unavailable." };
+    return { showToast: "Anvil Court: subreddit context unavailable." };
   }
   const slug = ruleKey({ ruleRef: record.ruleRef, reasonText: record.reasonText });
   const display = ruleLabel({ ruleRef: record.ruleRef, reasonText: record.reasonText });
@@ -185,10 +185,10 @@ export async function publishMirrorMenu(): Promise<unknown> {
     return { showToast: `Mirror publish failed: ${result.reason ?? "unknown error"}` };
   }
   if (result.totalReceipts === 0) {
-    return { showToast: `Mirror published to /wiki/receipts. (Page is empty — no receipts logged yet.)` };
+    return { showToast: `Mirror published to /wiki/anvil-court. (Page is empty — no records logged yet.)` };
   }
   return {
-    showToast: `Mirror published to /wiki/receipts — ${result.ruleCount} rule(s), ${result.totalReceipts} receipts.`,
+    showToast: `Mirror published to /wiki/anvil-court — ${result.ruleCount} rule(s), ${result.totalReceipts} record(s).`,
   };
 }
 

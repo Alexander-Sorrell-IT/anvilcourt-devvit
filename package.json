@@ -1,10 +1,10 @@
 {
   "private": true,
-  "name": "receipts",
+  "name": "anvilcourt",
   "version": "0.0.0",
   "license": "BSD-3-Clause",
   "type": "module",
-  "description": "Receipts — end silent moderation: auto removal explanations + searchable audit log for Reddit (Devvit).",
+  "description": "Anvil Court — case-law engine for Reddit moderation: every removal becomes precedent; every appeal renders the rule's track record; mods rule with context, not memory (Devvit).",
   "scripts": {
     "build": "node --experimental-strip-types ./tools/build.ts --minify",
     "deploy": "npm run build && devvit upload",

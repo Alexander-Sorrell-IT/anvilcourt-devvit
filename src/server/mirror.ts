@@ -4,7 +4,7 @@ import { context, reddit } from "@devvit/web/server";
 import { renderMirrorMarkdown, rollupRule, type MirrorRuleRow } from "../core/mirror.ts";
 import { getRuleRecords, listRules } from "./audit.ts";
 
-const WIKI_PAGE = "receipts";
+const WIKI_PAGE = "anvil-court";
 const MAX_RULES = 50;
 
 function activeSubName(): string {
@@ -53,20 +53,20 @@ export async function publishMirror(): Promise<PublishResult> {
         subredditName: subreddit,
         page: WIKI_PAGE,
         content: markdown,
-        reason: "Receipts: scheduled mirror update",
+        reason: "Anvil Court: scheduled mirror update",
       });
     } catch {
       await reddit.createWikiPage({
         subredditName: subreddit,
         page: WIKI_PAGE,
         content: markdown,
-        reason: "Receipts: initial mirror publish",
+        reason: "Anvil Court: initial mirror publish",
       });
     }
     return { ok: true, subreddit, ruleCount: rows.length, totalReceipts };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error("[receipts] mirror publish failed:", e);
+    console.error("[anvilcourt] mirror publish failed:", e);
     return { ok: false, subreddit, ruleCount: rows.length, totalReceipts, reason: msg };
   }
 }

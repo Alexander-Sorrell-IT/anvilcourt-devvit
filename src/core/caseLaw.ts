@@ -67,10 +67,10 @@ export function composePrecedentPanel(input: {
     `**REVERSAL RATE ${reversalRate}% (${s.overturned}/${s.total}) — u/${input.appellantUser} appealing "${input.ruleDisplay}"**`,
   );
   lines.push('');
-  lines.push(`**Receipts — case law for "${input.ruleDisplay}" in r/${input.subreddit}**`);
+  lines.push(`**Anvil Court — case law for "${input.ruleDisplay}" in r/${input.subreddit}**`);
   lines.push('');
   lines.push(
-    `Across **${s.total}** prior receipts on this rule: ` +
+    `Across **${s.total}** prior decisions on this rule: ` +
       `**${s.overturned} overturned** (${reversalRate}%), ` +
       `${s.upheld} upheld, ` +
       `${s.appealed} appealed (open), ` +
@@ -87,7 +87,7 @@ export function composePrecedentPanel(input: {
   }
   lines.push('');
   lines.push(
-    `**This appellant** (u/${input.appellantUser}): ${input.appellantPriorTotal} prior receipt(s), ` +
+    `**This appellant** (u/${input.appellantUser}): ${input.appellantPriorTotal} prior decision(s), ` +
       `${input.appellantPriorOverturned} previously overturned.`,
   );
   lines.push('');
@@ -111,7 +111,7 @@ export function composeReversalUserDM(input: {
     `Good news — a moderator of r/${input.subreddit} has reversed the removal of your ${input.itemType}.\n\n` +
     `Original rule cited: *${input.ruleDisplay}*.${noteLine}\n\n` +
     `Your content is restored: ${url}\n\n` +
-    `This decision was reviewed by a human moderator and logged. (Receipts: every decision shows its work.)`
+    `This decision was reviewed by a human moderator and logged. (Anvil Court: every decision shows its work.)`
   );
 }
 
@@ -124,7 +124,7 @@ export function composeReversalModConfirm(input: {
   const trimmed = input.note.trim();
   const noteLine = trimmed.length > 0 ? ` Note: "${trimmed}"` : '';
   return (
-    `Receipts: **reversed** ${input.itemId} by u/${input.appellantUser}.${noteLine}\n\n` +
+    `Anvil Court: **reversed** ${input.itemId} by u/${input.appellantUser}.${noteLine}\n\n` +
     `- Approved the item on Reddit.\n` +
     `- DM'd the user with the reversal notice.\n` +
     `- Logged as overturned — feeds future precedent panels.\n\n` +
@@ -138,10 +138,10 @@ export function composeUserReceiptsList(input: {
   records: ReceiptRecord[];
 }): string {
   if (input.records.length === 0) {
-    return `u/${input.username}: no Receipts have been logged for you in this subreddit.`;
+    return `u/${input.username}: no records have been logged for you in this subreddit.`;
   }
   const lines: string[] = [];
-  lines.push(`**Your Receipts (u/${input.username}) — most recent first:**`);
+  lines.push(`**Your case file (u/${input.username}) — most recent first:**`);
   lines.push('');
   for (const r of input.records.slice(0, 20)) {
     const status = r.appealStatus && r.appealStatus !== 'none' ? ` — _${r.appealStatus}_` : '';

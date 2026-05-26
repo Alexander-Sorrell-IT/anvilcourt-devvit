@@ -85,7 +85,7 @@ describe('composePrecedentPanel', () => {
     expect(body).toContain('10');
     expect(body).toContain('30%'); // 3/10 reversal rate
     expect(body).toContain('u/alice');
-    expect(body).toContain('5 prior receipt(s)');
+    expect(body).toContain('5 prior decision(s)');
     expect(body).toContain('/reverse');
     expect(body).toContain('u/bob');
   });
@@ -153,7 +153,7 @@ describe('composeUserReceiptsList', () => {
   });
   it('handles empty list', () => {
     const body = composeUserReceiptsList({ username: 'alice', records: [] });
-    expect(body).toContain('no Receipts');
+    expect(body).toContain('no records');
   });
 });
 

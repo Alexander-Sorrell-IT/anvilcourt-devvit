@@ -1,4 +1,4 @@
-// The Receipts engine: dedup -> config gate -> resolve reason -> compose -> deliver -> audit.
+// The Anvil Court engine: dedup -> config gate -> resolve reason -> compose -> deliver -> audit.
 import { settings } from "@devvit/web/server";
 import type { RemovalEvent, ReceiptRecord } from "../core/types.ts";
 import { parseConfig, shouldExplain } from "../core/config.ts";
@@ -19,7 +19,7 @@ export async function processRemoval(event: RemovalEvent): Promise<void> {
   try {
     raw = (await settings.getAll()) as Record<string, unknown>;
   } catch (err) {
-    console.error("[receipts] settings.getAll failed; using defaults:", err);
+    console.error("[anvilcourt] settings.getAll failed; using defaults:", err);
   }
   const cfg = parseConfig(raw);
   if (!shouldExplain(event.source, cfg)) return;
@@ -83,5 +83,5 @@ export async function processRemoval(event: RemovalEvent): Promise<void> {
   if (modmailConvId) {
     await rememberConv(modmailConvId, { itemId: event.itemId, user: event.author });
   }
-  console.log(`[receipts] ${event.source} ${event.itemType} ${event.itemId} -> ${reason.tier} -> ${deliveredVia}`);
+  console.log(`[anvilcourt] ${event.source} ${event.itemType} ${event.itemId} -> ${reason.tier} -> ${deliveredVia}`);
 }

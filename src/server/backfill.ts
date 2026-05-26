@@ -1,4 +1,4 @@
-// Cold-start backfill: when Receipts is freshly installed on a sub, walk recent
+// Cold-start backfill: when Anvil Court is freshly installed on a sub, walk recent
 // moderation log entries and seed the case-law corpus. Records ONLY — no
 // delivery (we don't notify the user about a removal that happened weeks ago).
 import { context, reddit } from "@devvit/web/server";
@@ -51,7 +51,7 @@ function asNumberTs(input: unknown): number {
 export async function backfillOnInstall(): Promise<{ scanned: number; written: number }> {
   const sub = (context as unknown as { subredditName?: string }).subredditName ?? "";
   if (!sub) {
-    console.log("[receipts] backfill skipped: no subreddit context");
+    console.log("[anvilcourt] backfill skipped: no subreddit context");
     return { scanned: 0, written: 0 };
   }
   const cutoff = Date.now() - BACKFILL_WINDOW_DAYS * 24 * 60 * 60 * 1000;
@@ -96,8 +96,8 @@ export async function backfillOnInstall(): Promise<{ scanned: number; written: n
       written++;
     }
   } catch (err) {
-    console.error("[receipts] backfill failed:", err);
+    console.error("[anvilcourt] backfill failed:", err);
   }
-  console.log(`[receipts] backfill r/${sub}: scanned ${scanned}, wrote ${written} receipt(s)`);
+  console.log(`[anvilcourt] backfill r/${sub}: scanned ${scanned}, wrote ${written} receipt(s)`);
   return { scanned, written };
 }

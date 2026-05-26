@@ -13,7 +13,7 @@ export async function deliverComment(itemId: string, body: string): Promise<bool
     await comment.distinguish(true); // sticky + distinguish (matches native removal-reason pattern)
     return true;
   } catch (e) {
-    console.error(`[receipts] comment delivery failed for ${itemId}:`, e);
+    console.error(`[anvilcourt] comment delivery failed for ${itemId}:`, e);
     return false;
   }
 }
@@ -40,7 +40,7 @@ export async function deliverModmail(
       anyRes?.conversation?.id ?? anyRes?.conversationId ?? anyRes?.id;
     return id;
   } catch (e) {
-    console.error(`[receipts] modmail delivery failed for u/${username}:`, e);
+    console.error(`[anvilcourt] modmail delivery failed for u/${username}:`, e);
     return undefined;
   }
 }

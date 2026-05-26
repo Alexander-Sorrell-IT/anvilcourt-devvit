@@ -1,4 +1,4 @@
-// Redis-backed audit store for Receipts: dedup, decision records, per-user and
+// Redis-backed audit store for Anvil Court: dedup, decision records, per-user and
 // recent indexes, per-rule index, appeal status. Uses the @devvit/web/server redis client.
 import { redis } from "@devvit/web/server";
 import type { ReceiptRecord, AppealStatus } from "../core/types.ts";
@@ -148,7 +148,7 @@ export async function markReversed(itemId: string, when: number): Promise<void> 
   await setAppealStatus(itemId, "overturned", when);
 }
 
-/** Remember which Receipts modmail thread corresponds to which user/item, so a mod's
+/** Remember which Anvil Court modmail thread corresponds to which user/item, so a mod's
  *  later /reverse reply can be routed back to the correct removal record. */
 export async function rememberConv(conversationId: string, info: { itemId: string; user: string }): Promise<void> {
   if (!conversationId) return;

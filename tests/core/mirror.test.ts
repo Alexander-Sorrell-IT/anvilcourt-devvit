@@ -64,7 +64,7 @@ describe('renderMirrorMarkdown', () => {
       ],
       generatedAt: NOW,
     });
-    expect(md).toContain('Receipts — moderation case law for r/testsub');
+    expect(md).toContain('Anvil Court — moderation case law for r/testsub');
     expect(md).toContain('## Summary');
     expect(md).toContain('## Per-rule breakdown');
     expect(md).toContain('| Rule A | 2 |');

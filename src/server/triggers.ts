@@ -36,29 +36,29 @@ export async function handleAppInstall(): Promise<void> {
     const subredditId = context.subredditId;
     if (!subredditId) return;
     await reddit.modMail.createModDiscussionConversation({
-      subject: "Receipts is now active",
+      subject: "Anvil Court is now active",
       bodyMarkdown:
-        "**Receipts is installed and running.**\n\n" +
+        "**Anvil Court is installed and running.** The case-law engine for r/" + (context as unknown as { subredditName?: string }).subredditName + ".\n\n" +
         "When a post or comment is removed — by a mod, by AutoModerator's silent filter, by an AutoMod remove rule, or by Reddit's spam filter — the author now automatically gets a clear, rule-cited explanation with an appeal option, and the decision is logged.\n\n" +
-        "**New: case law for moderation.**\n" +
-        "- Every removal becomes precedent. When a user appeals, you get an internal mod-only note showing the rule's track record across this sub.\n" +
-        "- Reply **`/reverse`** in any appeal thread to one-click restore the content, DM the user, and log the reversal.\n" +
-        "- Menu → *Receipts: case file by rule* — see every removal grouped by rule.\n" +
-        "- Menu → *Receipts: publish public mirror* — refresh an aggregate, anonymized case-law page at /wiki/receipts. Counts only, no usernames or links.\n" +
-        "- Users can DM the sub with `/my-receipts` to see their own history (self-serve transparency).\n" +
-        "- We've also backfilled the last 90 days of your mod log so the precedent panel works from day one.\n\n" +
-        "Appeals come to *you* — Receipts never overturns a removal automatically.",
+        "**Case law for moderation, three surfaces, one substrate:**\n" +
+        "- **Triage:** mod menu on any post or comment → *Anvil Court: precedent for this item* — see the rule's prior outcomes before you decide.\n" +
+        "- **Appeal:** when a user appeals via modmail, Anvil Court auto-renders an internal note in the same thread showing the rule's reversal rate and recent reversals. Reply **`/reverse [note]`** to one-click restore the content, DM the user, and log the reversal as precedent.\n" +
+        "- **Public ledger:** mod menu → *Anvil Court: publish public mirror* — refresh an aggregate, anonymized case-law page at /wiki/anvil-court. Counts only, no usernames or links.\n" +
+        "- **Look up:** menu → *Anvil Court: look up user* / *recent removals* / *case file by rule*.\n" +
+        "- **Self-serve:** users can DM the sub with `/my-receipts` to see their own history.\n" +
+        "- **Cold-start:** we've backfilled the last 90 days of your mod log so precedent works from day one.\n\n" +
+        "Appeals come to *you* — Anvil Court never overturns a removal automatically.",
       subredditId: subredditId as `t5_${string}`,
     });
   } catch (e) {
-    console.error("[receipts] welcome modmail failed:", e);
+    console.error("[anvilcourt] welcome modmail failed:", e);
   }
   // Cold-start: backfill the last 90 days of modlog so the precedent panel has
   // a populated corpus on the first appeal. Errors are logged inside, not thrown.
   try {
     await backfillOnInstall();
   } catch (e) {
-    console.error("[receipts] backfill threw:", e);
+    console.error("[anvilcourt] backfill threw:", e);
   }
 }
 
@@ -169,7 +169,7 @@ async function readConversation(conversationId: string): Promise<{
       subredditName,
     };
   } catch (e) {
-    console.error("[receipts] getConversation failed:", e);
+    console.error("[anvilcourt] getConversation failed:", e);
     return {};
   }
 }
@@ -178,7 +178,7 @@ async function postInternalNote(conversationId: string, body: string): Promise<v
   try {
     await reddit.modMail.reply({ conversationId, body, isInternal: true });
   } catch (e) {
-    console.error("[receipts] internal modmail reply failed:", e);
+    console.error("[anvilcourt] internal modmail reply failed:", e);
   }
 }
 
@@ -186,7 +186,7 @@ async function postPublicReply(conversationId: string, body: string): Promise<vo
   try {
     await reddit.modMail.reply({ conversationId, body, isInternal: false, isAuthorHidden: true });
   } catch (e) {
-    console.error("[receipts] public modmail reply failed:", e);
+    console.error("[anvilcourt] public modmail reply failed:", e);
   }
 }
 
@@ -229,10 +229,10 @@ async function performReversal(
   try {
     await reddit.approve(target.itemId as `t1_${string}` | `t3_${string}`);
   } catch (e) {
-    console.error(`[receipts] approve failed for ${target.itemId}:`, e);
+    console.error(`[anvilcourt] approve failed for ${target.itemId}:`, e);
     await postInternalNote(
       conversationId,
-      `Receipts: tried to reverse ${target.itemId} but **approve failed** — see logs. The item may already be approved or no longer exist.`,
+      `Anvil Court: tried to reverse ${target.itemId} but **approve failed** — see logs. The item may already be approved or no longer exist.`,
     );
     return;
   }
@@ -306,7 +306,7 @@ export async function handleModMail(p: Payload): Promise<void> {
     if (!target) {
       await postInternalNote(
         conversationId,
-        "Receipts: couldn't find a logged removal for this conversation. (Reversal commands work on appeal threads created by Receipts.)",
+        "Anvil Court: couldn't find a logged removal for this conversation. (Reversal commands work on appeal threads created by Anvil Court.)",
       );
       return;
     }
@@ -317,7 +317,7 @@ export async function handleModMail(p: Payload): Promise<void> {
       await setAppealStatus(target.itemId, "upheld", Date.now());
       await postInternalNote(
         conversationId,
-        `Receipts: marked ${target.itemId} as **upheld**.${cmd.note ? ` Note: "${cmd.note}"` : ""}`,
+        `Anvil Court: marked ${target.itemId} as **upheld**.${cmd.note ? ` Note: "${cmd.note}"` : ""}`,
       );
     }
     return;
