@@ -34,6 +34,13 @@
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/publish-mirror"
+      },
+      {
+        "label": "Receipts: precedent for this item",
+        "description": "See the rule's prior outcomes for this item before you decide",
+        "location": ["post", "comment"],
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/precedent-for-item"
       }
     ]
   },

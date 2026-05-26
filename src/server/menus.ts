@@ -3,11 +3,12 @@
 import { context } from "@devvit/web/server";
 import {
   getRecent,
+  getRecord,
   getRuleRecords,
   getUserRecords,
   listRules,
 } from "./audit.ts";
-import { computeRuleStats, ruleKey } from "../core/caseLaw.ts";
+import { computeRuleStats, ruleKey, ruleLabel } from "../core/caseLaw.ts";
 import { publishMirror } from "./mirror.ts";
 
 type Payload = Record<string, unknown>;
@@ -118,6 +119,63 @@ export async function caseFileForm(p: Payload): Promise<unknown> {
     lines.push(`${fmtDate(r.ts)} u/${r.author} ${r.itemType}${tag} — ${r.reasonText.slice(0, 60)}`);
   }
   return { showToast: lines.join("\n") };
+}
+
+/** Extract the targeted item id from a post- or comment-scoped menu payload.
+ *  Devvit hasn't pinned the exact field name across versions — try the common ones. */
+export function extractTargetItemId(p: Payload): string | undefined {
+  const candidates = [
+    p?.["targetId"],
+    p?.["postId"],
+    p?.["commentId"],
+    p?.["thingId"],
+    (p?.["target"] as Record<string, unknown> | undefined)?.["id"],
+    (p?.["post"] as Record<string, unknown> | undefined)?.["id"],
+    (p?.["comment"] as Record<string, unknown> | undefined)?.["id"],
+    (p?.["location"] as Record<string, unknown> | undefined)?.["postId"],
+    (p?.["location"] as Record<string, unknown> | undefined)?.["commentId"],
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && /^t[13]_/.test(c)) return c;
+  }
+  return undefined;
+}
+
+/** Menu handler: precedent for the item this menu was opened on (post or comment).
+ *  Surfaces case law at the *triage* moment, not just at appeal. */
+export async function precedentForItemMenu(p: Payload): Promise<unknown> {
+  const itemId = extractTargetItemId(p);
+  if (!itemId) {
+    return {
+      showToast:
+        "Receipts: couldn't read the item id from this menu invocation. (Try the subreddit-level 'Receipts: case file by rule' instead.)",
+    };
+  }
+  const record = await getRecord(itemId);
+  if (!record) {
+    return {
+      showToast:
+        `Receipts: no logged removal yet for ${itemId}. The case file is per-rule; this item may not have been removed (or was removed before the app was installed and didn't appear in backfill).`,
+    };
+  }
+  const sub = (record.subreddit ?? activeSubName() ?? "").trim();
+  if (!sub) {
+    return { showToast: "Receipts: subreddit context unavailable." };
+  }
+  const slug = ruleKey({ ruleRef: record.ruleRef, reasonText: record.reasonText });
+  const display = ruleLabel({ ruleRef: record.ruleRef, reasonText: record.reasonText });
+  const records = await getRuleRecords(sub, slug, 100);
+  const stats = computeRuleStats(records);
+  const rate = stats.total > 0 ? Math.round((stats.overturned / stats.total) * 100) : 0;
+  const status = record.appealStatus && record.appealStatus !== "none"
+    ? ` This receipt: ${record.appealStatus}.`
+    : "";
+  const ageDays = Math.max(0, Math.round((Date.now() - record.ts) / (24 * 60 * 60 * 1000)));
+  return {
+    showToast:
+      `${display}: ${stats.total} removals, ${stats.overturned} reversed (${rate}%), ${stats.upheld} upheld.${status} ` +
+      `This removal: ${ageDays}d ago by ${record.modName ?? "unknown"}.`,
+  };
 }
 
 /** Menu handler: publish (or refresh) the public Mod Mirror wiki page. */

@@ -7,6 +7,7 @@ import {
   caseFileMenu,
   lookupUserForm,
   lookupUserMenu,
+  precedentForItemMenu,
   publishMirrorMenu,
   recentLogMenu,
 } from "./menus.ts";
@@ -51,6 +52,8 @@ async function route(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
       return writeJSON(200, await caseFileForm(await readJSON(req)), rsp);
     case Endpoint.MenuPublishMirror:
       return writeJSON(200, await publishMirrorMenu(), rsp);
+    case Endpoint.MenuPrecedentForItem:
+      return writeJSON(200, await precedentForItemMenu(await readJSON(req)), rsp);
     default:
       return writeJSON(404, { error: "not found" }, rsp);
   }
