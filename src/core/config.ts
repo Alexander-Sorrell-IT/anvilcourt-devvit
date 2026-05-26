@@ -11,6 +11,8 @@ export interface ReceiptsConfig {
   appealInstructions: string;
   perReasonOptOut: string[];
   explainSources: { modRemovals: boolean; automodFilter: boolean; automodRemove: boolean; spamFilter: boolean };
+  /** Hard ceiling on automod-filter explanations per author/day (0 = unlimited). */
+  automodFilterDailyCap: number;
 }
 
 const bool = (v: unknown, d: boolean): boolean => {
@@ -24,6 +26,9 @@ const str = (v: unknown, d: string): string => {
 };
 
 export function parseConfig(raw: Record<string, unknown>): ReceiptsConfig {
+  const rawCap = str(raw.automodFilterDailyCap, '3').trim();
+  const capParsed = Number.parseInt(rawCap, 10);
+  const cap = Number.isFinite(capParsed) && capParsed >= 0 ? capParsed : 3;
   return {
     deliveryChannel: (str(raw.deliveryChannel, 'both') as ReceiptsConfig['deliveryChannel']),
     appealsEnabled: bool(raw.appealsEnabled, true),
@@ -36,6 +41,7 @@ export function parseConfig(raw: Record<string, unknown>): ReceiptsConfig {
       automodRemove: bool(raw.explainAutomodRemove, true),
       spamFilter: bool(raw.explainSpamFilter, false),
     },
+    automodFilterDailyCap: cap,
   };
 }
 

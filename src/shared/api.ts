@@ -11,6 +11,7 @@ export const Endpoint = {
   MenuRecentLog: "/internal/menu/recent-log",
   MenuCaseFile: "/internal/menu/case-file",
   FormCaseFile: "/internal/form/case-file",
+  MenuPublishMirror: "/internal/menu/publish-mirror",
 } as const;
 
 export type Endpoint = (typeof Endpoint)[keyof typeof Endpoint];

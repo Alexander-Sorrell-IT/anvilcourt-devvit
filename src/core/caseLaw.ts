@@ -62,6 +62,11 @@ export function composePrecedentPanel(input: {
   const s = input.stats;
   const reversalRate = s.total > 0 ? Math.round((s.overturned / s.total) * 100) : 0;
   const lines: string[] = [];
+  // Headline line — renders as the preview when this internal note is collapsed.
+  lines.push(
+    `**REVERSAL RATE ${reversalRate}% (${s.overturned}/${s.total}) — u/${input.appellantUser} appealing "${input.ruleDisplay}"**`,
+  );
+  lines.push('');
   lines.push(`**Receipts — case law for "${input.ruleDisplay}" in r/${input.subreddit}**`);
   lines.push('');
   lines.push(

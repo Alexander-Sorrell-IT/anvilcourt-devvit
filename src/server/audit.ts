@@ -161,3 +161,20 @@ export async function lookupConv(conversationId: string): Promise<{ itemId: stri
   if (!h || !h.itemId) return undefined;
   return { itemId: h.itemId, user: h.user ?? "" };
 }
+
+const RATE_CAP = (sub: string, user: string, ymd: string): string =>
+  `receipt:ratecap:${sub.toLowerCase()}:${user.toLowerCase()}:${ymd}`;
+
+/** Increment per-author per-sub daily counter for AutoMod-filter explanations.
+ *  Returns the new counter value. Counter auto-expires after ~48h. */
+export async function bumpAuthorFilterCounter(subreddit: string, user: string, now: number = Date.now()): Promise<number> {
+  if (!subreddit || !user) return 0;
+  const ymd = new Date(now).toISOString().slice(0, 10);
+  const key = RATE_CAP(subreddit, user, ymd);
+  const n = await redis.incrBy(key, 1);
+  if (n === 1) {
+    // First bump today — set a 2-day expiry so old counters self-clean.
+    await redis.expire(key, 60 * 60 * 48);
+  }
+  return n;
+}

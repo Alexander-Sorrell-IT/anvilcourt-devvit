@@ -27,6 +27,13 @@
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/case-file"
+      },
+      {
+        "label": "Receipts: publish public mirror",
+        "description": "Refresh the aggregate, anonymized case-law page at /wiki/receipts",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/publish-mirror"
       }
     ]
   },
@@ -104,6 +111,12 @@
         "type": "boolean",
         "label": "Explain Reddit spam-filter removals",
         "defaultValue": false
+      },
+      "automodFilterDailyCap": {
+        "type": "string",
+        "label": "Daily AutoMod-filter explanations per author (0 = unlimited)",
+        "helpText": "Hard ceiling on how many times Receipts will explain AutoMod silent-filter removals to the same author per UTC day. Protects against turning the silent filter into a spammer feedback channel. Per-author, per-subreddit.",
+        "defaultValue": "3"
       }
     }
   },

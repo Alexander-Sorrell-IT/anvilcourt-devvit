@@ -6,7 +6,7 @@ import { resolveReason } from "../core/reasonResolver.ts";
 import { composeExplanation } from "../core/explanationComposer.ts";
 import { makeReasonLookups } from "./reasonSources.ts";
 import { deliver } from "./delivery.ts";
-import { claimUnseen, writeRecord, rememberConv } from "./audit.ts";
+import { bumpAuthorFilterCounter, claimUnseen, rememberConv, writeRecord } from "./audit.ts";
 
 export async function processRemoval(event: RemovalEvent): Promise<void> {
   if (!event.itemId || !event.author) return;
@@ -30,9 +30,19 @@ export async function processRemoval(event: RemovalEvent): Promise<void> {
     (o) => reason.ruleRef === o || reason.text.toLowerCase().includes(o.toLowerCase()),
   );
 
+  // Per-author daily rate cap on AutoMod silent-filter explanations: prevents the silent
+  // filter from becoming a spammer feedback channel. Applies only to automod-filter source.
+  let rateLimited = false;
+  if (!optedOut && event.source === "automod-filter" && cfg.automodFilterDailyCap > 0) {
+    const count = await bumpAuthorFilterCounter(event.subreddit, event.author, event.ts);
+    if (count > cfg.automodFilterDailyCap) {
+      rateLimited = true;
+    }
+  }
+
   let deliveredVia = "suppressed";
   let modmailConvId: string | undefined;
-  if (!optedOut) {
+  if (!optedOut && !rateLimited) {
     const body = composeExplanation({
       reason,
       itemType: event.itemType,
@@ -51,6 +61,8 @@ export async function processRemoval(event: RemovalEvent): Promise<void> {
     });
     deliveredVia = result.tag;
     modmailConvId = result.modmailConversationId;
+  } else if (rateLimited) {
+    deliveredVia = "rate-limited";
   }
 
   const record: ReceiptRecord = {

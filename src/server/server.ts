@@ -7,6 +7,7 @@ import {
   caseFileMenu,
   lookupUserForm,
   lookupUserMenu,
+  publishMirrorMenu,
   recentLogMenu,
 } from "./menus.ts";
 
@@ -48,6 +49,8 @@ async function route(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
       return writeJSON(200, await caseFileMenu(), rsp);
     case Endpoint.FormCaseFile:
       return writeJSON(200, await caseFileForm(await readJSON(req)), rsp);
+    case Endpoint.MenuPublishMirror:
+      return writeJSON(200, await publishMirrorMenu(), rsp);
     default:
       return writeJSON(404, { error: "not found" }, rsp);
   }

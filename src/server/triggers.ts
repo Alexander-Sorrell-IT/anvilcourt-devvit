@@ -25,6 +25,7 @@ import {
   ruleLabel,
 } from "../core/caseLaw.ts";
 import { deliverModmail } from "./delivery.ts";
+import { backfillOnInstall } from "./backfill.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Payload = Record<string, any>;
@@ -43,12 +44,21 @@ export async function handleAppInstall(): Promise<void> {
         "- Every removal becomes precedent. When a user appeals, you get an internal mod-only note showing the rule's track record across this sub.\n" +
         "- Reply **`/reverse`** in any appeal thread to one-click restore the content, DM the user, and log the reversal.\n" +
         "- Menu → *Receipts: case file by rule* — see every removal grouped by rule.\n" +
-        "- Users can DM the sub with `/my-receipts` to see their own history (self-serve transparency).\n\n" +
+        "- Menu → *Receipts: publish public mirror* — refresh an aggregate, anonymized case-law page at /wiki/receipts. Counts only, no usernames or links.\n" +
+        "- Users can DM the sub with `/my-receipts` to see their own history (self-serve transparency).\n" +
+        "- We've also backfilled the last 90 days of your mod log so the precedent panel works from day one.\n\n" +
         "Appeals come to *you* — Receipts never overturns a removal automatically.",
       subredditId: subredditId as `t5_${string}`,
     });
   } catch (e) {
     console.error("[receipts] welcome modmail failed:", e);
+  }
+  // Cold-start: backfill the last 90 days of modlog so the precedent panel has
+  // a populated corpus on the first appeal. Errors are logged inside, not thrown.
+  try {
+    await backfillOnInstall();
+  } catch (e) {
+    console.error("[receipts] backfill threw:", e);
   }
 }
 

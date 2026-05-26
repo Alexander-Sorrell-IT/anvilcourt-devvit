@@ -8,6 +8,7 @@ import {
   listRules,
 } from "./audit.ts";
 import { computeRuleStats, ruleKey } from "../core/caseLaw.ts";
+import { publishMirror } from "./mirror.ts";
 
 type Payload = Record<string, unknown>;
 
@@ -117,6 +118,20 @@ export async function caseFileForm(p: Payload): Promise<unknown> {
     lines.push(`${fmtDate(r.ts)} u/${r.author} ${r.itemType}${tag} — ${r.reasonText.slice(0, 60)}`);
   }
   return { showToast: lines.join("\n") };
+}
+
+/** Menu handler: publish (or refresh) the public Mod Mirror wiki page. */
+export async function publishMirrorMenu(): Promise<unknown> {
+  const result = await publishMirror();
+  if (!result.ok) {
+    return { showToast: `Mirror publish failed: ${result.reason ?? "unknown error"}` };
+  }
+  if (result.totalReceipts === 0) {
+    return { showToast: `Mirror published to /wiki/receipts. (Page is empty — no receipts logged yet.)` };
+  }
+  return {
+    showToast: `Mirror published to /wiki/receipts — ${result.ruleCount} rule(s), ${result.totalReceipts} receipts.`,
+  };
 }
 
 // Re-export for symmetry — referenced by other module imports if any.
