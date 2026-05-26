@@ -1,7 +1,7 @@
 # Receipts — Launch Checklist
 
-**Deadline: 2026-05-27 20:00 CDT.** App: `grantscribe` v0.0.2 (product "Receipts").
-**Listing:** https://developers.reddit.com/apps/grantscribe  •  **Test sub:** r/alexander_sorrell_it
+**Deadline: 2026-05-27 20:00 CDT.** App: `receipts` (product "Receipts").
+**Listing:** https://developers.reddit.com/apps/receipts  •  **Test sub:** r/alexander_sorrell_it
 
 ## ✅ Done
 - Full app built — 17 unit tests, `tsc --build` clean, esbuild build.

@@ -1,7 +1,7 @@
 # Devpost Submission — Receipts
 
 **Category:** Best New Mod Tool
-**App listing:** https://developers.reddit.com/apps/grantscribe  *(confirm/update after publish)*
+**App listing:** https://developers.reddit.com/apps/receipts  *(confirm/update after publish)*
 **Source:** https://github.com/Alexander-Sorrell-IT/receipts-devvit
 **Reddit username(s):** u/AlexanderSorrell-IT
 **Built with:** Reddit Developer Platform (Devvit Web), TypeScript, Redis. Deterministic — no LLM, no external services.
