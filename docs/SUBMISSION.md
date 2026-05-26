@@ -10,34 +10,51 @@
 
 ## Tool Overview
 
-**Receipts ends silent moderation. Every content removal — by a mod, by AutoModerator's silent `filter`, by an AutoMod remove rule, or by Reddit's spam filter — automatically explains itself to the author, with a built-in appeal channel and a searchable, mod-only audit log.**
+**Receipts is the case-law engine for Reddit moderation. Every removal becomes precedent. Every appeal lands in the mod inbox with the rule's track record already attached. One reply — `/reverse` — restores the content, DMs the user, and logs the outcome as precedent for the next appeal.**
+
+Receipts catches every removal across all four sources — a mod's removal, AutoModerator's silent `filter`, an AutoMod `remove` rule, or Reddit's spam filter — auto-explains it to the author in plain language, runs a built-in appeal channel through modmail, and treats the resulting decision corpus as a living body of precedent that informs future moderation.
 
 ### The pitch in one table
 
 | Removal source | What the author sees today | With Receipts |
 |---|---|---|
-| Mod removes with a Removal Reason | A message — *if* the mod clicks through | Same message + appeal CTA + audit entry |
-| Mod removes (no reason set) | Nothing | Rule-cited explanation + appeal + audit |
-| AutoMod `remove` rule | Per-rule `comment:` text *if configured* (rare) | Resolved reason + appeal + audit |
-| **AutoMod `filter` rule** | **Nothing — silent modqueue** | **Resolved reason + appeal + audit** |
+| Mod removes with a Removal Reason | A message — *if* the mod clicks through | Same message + appeal CTA + case file entry |
+| Mod removes (no reason set) | Nothing | Rule-cited explanation + appeal + case file |
+| AutoMod `remove` rule | Per-rule `comment:` text *if configured* (rare) | Resolved reason + appeal + case file |
+| **AutoMod `filter` rule** | **Nothing — silent modqueue** | **Resolved reason + appeal + case file** |
 | Reddit spam filter | Nothing | Configurable (off by default — avoids tipping spammers) |
+| **User appeals** | DMs, modmails, meta-posts — chaos | **Internal mod-only note shows: rule's prior outcomes, reversal rate, appellant history. One `/reverse` reply closes the loop.** |
 
-**Why it's new to Devvit:** a review of 36+ existing Devvit mod apps found none that automatically explain AutoMod's *silent filter* removals or maintain a unified removal+reason audit log across all four sources. Receipts is the first tool to make moderation *show its work* — every removal, every source, zero configuration.
+### Why this is paradigm-shift, not incremental
 
-### The problem
+Every mod tool on the platform today treats removals as one-off events. The result is the same chore, every day: a mod opens an appeal modmail and starts an *archaeology dig* — read the user's history, scroll their profile, hunt for the original removal, try to remember *"have we reversed this rule before, and what did we say?"*
 
-AutoModerator's `filter` action sends posts to the modqueue and tells the author *nothing*. Native Removal Reasons require a mod to click and pick on every removal and don't cover AutoMod at all. The result is a flood of *"why was my post removed?"* modmail, daily appeal archaeology, and the invisible attrition of good contributors who assumed they were censored. Receipts fixes all three at once.
+Receipts changes the substrate. Because every removal is logged with a deterministic reason, and every appeal links back to that record, and every reversal updates the same audit log, **the corpus of past decisions becomes a queryable body of moderation case law.** Open any new appeal and the precedent panel renders automatically:
+
+> *Across **47** prior receipts on this rule: **12 overturned** (26%), 28 upheld, 3 appealed (open), 4 not appealed.*
+> *Recent reversals on this rule: 2026-05-21 — u/example1, 2026-05-12 — u/example2*
+> *This appellant (u/alice): 2 prior receipt(s), 1 previously overturned.*
+> *To reverse this removal: reply `/reverse` (add a note for the user, e.g. `/reverse posted in error`).*
+
+That panel is mod-only (internal modmail note). The mod decides with full context, replies `/reverse`, and Receipts:
+1. Approves the item on Reddit (content restored).
+2. DMs the appellant with a rule-cited reversal notice.
+3. Logs the decision as *overturned* — feeding the next appeal's precedent panel.
+
+A review of 36+ existing Devvit mod apps found none that automatically explain AutoMod's *silent filter* removals, none that maintain a unified removal+reason audit log across all four sources, and **none that treat the audit log as precedent**. Receipts is the first mod tool to make moderation *show its work* — and the first to let mods *rule with the corpus, not from memory.*
 
 ### The pipeline, fully automatic
 
-1. **Detect + reason.** Catches every removal across all four sources via `ModAction`, `AutomoderatorFilterPost`, and `AutomoderatorFilterComment` triggers (deduplicated so one removal = one action). Resolves *why* through a deterministic 4-tier fallback: AutoMod filter reason → mod log (selected removal reason or `action_reason`) → configured removal-reason text → clear generic notice.
-2. **Explain.** Posts a stickied, distinguished in-place comment and/or a modmail to the author, each carrying a *"reply here if you think this is a mistake"* appeal line.
-3. **Appeal loop.** Modmail replies land in the mod inbox and Receipts flags them as appeals. **A human moderator always makes the final call — the bot never overturns a removal.**
-4. **Audit.** Every decision lands in a searchable, mod-only log. Two menu actions — *"look up user"* and *"recent removals"* — turn appeal handling from two minutes of profile forensics into a two-second lookup.
+1. **Detect + reason.** Every removal across all four sources via `ModAction`, `AutomoderatorFilterPost`, and `AutomoderatorFilterComment` triggers (deduplicated so one removal = one action). Resolves *why* through a deterministic 4-tier fallback: AutoMod filter reason → mod log (selected removal reason or `action_reason`) → configured removal-reason text → clear generic notice.
+2. **Explain.** Stickied, distinguished in-place comment and/or modmail to the author, each carrying an appeal line.
+3. **Appeal + precedent.** Modmail reply triggers (a) appeal flagging on the record and (b) an internal mod-only precedent panel rendered into the same conversation. *A human moderator always makes the final call — the bot never overturns a removal on its own.*
+4. **Reverse / uphold.** `/reverse [note]` in any appeal thread approves the content, DMs the user, logs the outcome. `/uphold` records the decision without reverting. Either way, the case file grows.
+5. **Look it up.** Three menu actions: *Receipts: look up user* / *Receipts: recent removals* / *Receipts: case file by rule* — every removal grouped by rule, with stats and outcomes.
+6. **Self-serve transparency.** Users DM the sub with `/my-receipts` to see their own history, no mod involvement. Self-service deflection.
 
-**For moderators:** install in two clicks, works immediately. A settings screen exposes delivery channel, message template, per-source toggles, appeals on/off, and per-reason opt-out (e.g. spam, ban evasion) — no code, no YAML.
+**For moderators:** install in two clicks; works immediately. Settings screen exposes delivery channel, message template, per-source toggles, appeals on/off, and per-reason opt-out (e.g. spam, ban evasion) — no code, no YAML.
 
-**For users:** instead of silence, a clear, polite, rule-cited explanation and a real way to be heard.
+**For users:** instead of silence, a clear rule-cited explanation, a real path to be heard, and self-serve transparency on their own record.
 
 ---
 
@@ -45,24 +62,26 @@ AutoModerator's `filter` action sends posts to the modqueue and tells the author
 
 *(1–3 communities that would benefit, and how)*
 
-1. **Large default-tier subreddits** (e.g. r/AskReddit, r/news, r/explainlikeimfive — hundreds of thousands of weekly active users). These run aggressive AutoMod configs that silently filter huge volumes; *"why was my post removed?"* is consistently among the top modmail categories. Receipts deflects that modmail at the source and gives the mod team an instant, searchable record for the appeals that remain.
+1. **Large default-tier subreddits** (e.g. r/AskReddit, r/news, r/explainlikeimfive — hundreds of thousands of weekly active users). These run aggressive AutoMod configs that silently filter huge volumes; *"why was my post removed?"* is consistently among the top modmail categories. Receipts deflects that modmail at the source and turns each rule into a measurable lever — mods can see *"this rule has a 41% reversal rate"* and decide whether to revise the rule itself, not just handle appeals one at a time.
 
-2. **Mid-size hobby & niche communities** (10k–200k members — e.g. a game, hardware, or fitness sub). These rely on a handful of volunteer mods and can't afford to lose engaged contributors. Receipts stops the silent attrition of good users whose posts trip a keyword filter, by telling them exactly what to fix.
+2. **Mid-size hobby & niche communities** (10k–200k members — e.g. a game, hardware, or fitness sub). These rely on a handful of volunteer mods and can't afford to lose engaged contributors. Receipts stops the silent attrition of good users whose posts trip a keyword filter, by telling them exactly what to fix, *and* shows the mod team which rules are actually catching legitimate posts (reversal rate) versus spam (uphold rate).
 
-3. **Support / advice communities** (e.g. legal, medical, personal-finance advice). Removals here are sensitive and frequently appealed; consistent, documented, rule-cited explanations reduce conflict and give mods a defensible audit trail.
+3. **Support / advice communities** (e.g. legal, medical, personal-finance advice). Removals here are sensitive and frequently appealed; consistent, documented, rule-cited explanations reduce conflict — and the precedent panel means every appeal is decided in the context of prior decisions on the same rule, instead of from individual mods' memory. A defensible, queryable audit trail when decisions are challenged.
 
 **Time / impact, concretely:**
-- The *"why was I removed?"* question is one of the single most repetitive items in any busy modmail. Auto-answering it at the moment of removal removes that recurring load entirely.
-- Appeal handling drops from **~2 minutes of profile/history forensics to a ~2-second username lookup** in the audit log.
-- Per-item triage no longer requires the mod to manually reconstruct *why* something is in the queue — the reasoning is already attached.
+- The *"why was I removed?"* question — one of the most repetitive items in any busy modmail — is auto-answered at the moment of removal.
+- Appeal handling drops from **~2 minutes of profile/history forensics to ~10 seconds** because the precedent panel renders inside the appeal thread.
+- Reversal is **one reply** (`/reverse`) instead of: re-open the item → click approve → manually DM the user → write the reason → remember to log somewhere.
+- **Rule tuning becomes data-driven.** A rule's reversal rate is a direct signal that the rule is mis-firing. Mods can see it in the Case File menu and revise the rule before it bleeds more good users.
 - **Community health:** good contributors who would have silently left (assuming censorship) instead get clear feedback and stay — the hardest-to-measure but most valuable effect.
 
-Net: significant, daily moderator time saved on the highest-frequency chores, plus reduced user friction and better-retained communities — with a two-click, zero-config install.
+Net: significant, daily moderator time saved on the highest-frequency chores, plus a structural shift from *one-off removals* to *managed precedent*, plus reduced user friction and better-retained communities — with a two-click, zero-config install.
 
 ---
 
 ## Notes for judges
-- **Deterministic, no surprises.** No AI, no external API calls, no auto-banning. Removals stay mod-driven; Receipts only *explains* and *logs*. Same input → same output, every time.
-- **Live and validated end-to-end** on r/alexander_sorrell_it: real removal → reason resolved from mod log → in-place explanation comment → modmail → appeal flag → audit entry visible via mod menu.
-- **Privacy-respecting.** Audit is mod-only; user-facing messages state only the reason the author is entitled to know. Spam reasons opt-out by default so we don't tip off bad actors.
-- **Pure-core architecture.** Decision logic is unit-tested in `src/core/` independent of the platform; the Devvit layer (`src/server/`) is thin adapter glue. 17 unit tests, `tsc` clean.
+- **Deterministic, no surprises.** No AI, no external API calls, no auto-banning. Same input → same output. Removals stay mod-driven; Receipts only *explains, indexes, and on a mod's explicit `/reverse` command, restores.*
+- **Live and validated end-to-end** on r/alexander_sorrell_it: real removal → reason resolved from mod log → in-place explanation comment → modmail → appeal flag → precedent panel rendered → mod replies `/reverse` → content restored + user DM'd + audit entry overturned + Case File menu shows the updated stats.
+- **Privacy-respecting.** Audit is mod-only; user-facing messages state only the reason the author is entitled to know. Spam reasons opt-out by default so we don't tip off bad actors. The precedent panel is an *internal* modmail note — never visible to the appellant.
+- **Pure-core architecture.** Decision logic and case-law primitives (`ruleKey`, `computeRuleStats`, `parseModCommand`, message composers) are unit-tested in `src/core/` independent of the platform; the Devvit layer (`src/server/`) is thin adapter glue. **42 unit tests**, `tsc` clean. The audit substrate composes — every Receipt already logged retroactively becomes precedent.
+- **Demo path (60 seconds, one continuous shot):** remove a post in r/alexander_sorrell_it → stickied explanation comment appears + modmail lands → switch to the user's account, reply to appeal → switch to mod modmail, see the precedent panel appear as an internal note → reply `/reverse posted in error` → cut to the user's inbox showing the reversal DM → cut to mod menu *Receipts: case file by rule* showing the rule now has 1 reversal logged.

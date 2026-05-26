@@ -1,13 +1,19 @@
 // Redis-backed audit store for Receipts: dedup, decision records, per-user and
-// recent indexes, appeal status. Uses the @devvit/web/server redis client.
+// recent indexes, per-rule index, appeal status. Uses the @devvit/web/server redis client.
 import { redis } from "@devvit/web/server";
 import type { ReceiptRecord, AppealStatus } from "../core/types.ts";
+import { ruleKey } from "../core/caseLaw.ts";
 
 const SEEN = "receipt:seen"; // hash: itemId -> "1" (dedup)
 const ITEM = (id: string): string => `receipt:item:${id}`; // hash: the record
 const USER = (u: string): string => `receipt:user:${u.toLowerCase()}`; // zset ts->itemId
 const RECENT = "receipt:recent"; // zset ts->itemId
+const RULE = (sub: string, key: string): string => `receipt:rule:${sub.toLowerCase()}:${key}`; // zset ts->itemId
+const RULE_LABEL = (sub: string, key: string): string => `receipt:rulelabel:${sub.toLowerCase()}:${key}`; // string: display label
+const RULE_INDEX = (sub: string): string => `receipt:rules:${sub.toLowerCase()}`; // zset ts->ruleKey (first-seen)
+const CONV = (id: string): string => `receipt:conv:${id}`; // hash: conversationId -> {itemId, user}
 const RECENT_MAX = 500;
+const RULE_RECENT_MAX = 200;
 
 /** Atomically claim an item the first time it's seen. Returns true if THIS call
  *  is the first to see it (both ModAction and filter triggers can fire for one item). */
@@ -29,9 +35,25 @@ export async function writeRecord(r: ReceiptRecord): Promise<void> {
     ts: String(r.ts),
     appealStatus: r.appealStatus,
     appealedAt: r.appealedAt ? String(r.appealedAt) : "",
+    subreddit: r.subreddit ?? "",
   });
   await redis.zAdd(USER(r.author), { member: r.itemId, score: r.ts });
   await redis.zAdd(RECENT, { member: r.itemId, score: r.ts });
+
+  const sub = (r.subreddit ?? "").trim();
+  if (sub) {
+    const key = ruleKey({ ruleRef: r.ruleRef, reasonText: r.reasonText });
+    await redis.zAdd(RULE(sub, key), { member: r.itemId, score: r.ts });
+    // Remember the display label for this rule (first occurrence wins; cheap to overwrite).
+    const label = (r.ruleRef && r.ruleRef.trim()) || r.reasonText.slice(0, 80);
+    await redis.set(RULE_LABEL(sub, key), label);
+    await redis.zAdd(RULE_INDEX(sub), { member: key, score: r.ts });
+    const ruleCount = await redis.zCard(RULE(sub, key));
+    if (ruleCount > RULE_RECENT_MAX) {
+      await redis.zRemRangeByRank(RULE(sub, key), 0, ruleCount - RULE_RECENT_MAX - 1);
+    }
+  }
+
   const count = await redis.zCard(RECENT);
   if (count > RECENT_MAX) {
     await redis.zRemRangeByRank(RECENT, 0, count - RECENT_MAX - 1);
@@ -54,6 +76,7 @@ export async function getRecord(itemId: string): Promise<ReceiptRecord | undefin
     ts: Number(h.ts ?? 0),
     appealStatus: (h.appealStatus as AppealStatus) || "none",
     appealedAt: h.appealedAt ? Number(h.appealedAt) : undefined,
+    subreddit: h.subreddit || undefined,
   };
 }
 
@@ -85,6 +108,56 @@ export async function getRecent(limit = 25): Promise<ReceiptRecord[]> {
   return out;
 }
 
+/** Read up to `limit` receipts for a rule in a subreddit, newest first. */
+export async function getRuleRecords(subreddit: string, ruleSlug: string, limit = 50): Promise<ReceiptRecord[]> {
+  const sub = subreddit.trim();
+  if (!sub) return [];
+  const out: ReceiptRecord[] = [];
+  for (const id of await idsNewestFirst(RULE(sub, ruleSlug), limit)) {
+    const r = await getRecord(id);
+    if (r) out.push(r);
+  }
+  return out;
+}
+
+/** Recent overturned (reversed) receipts for a rule. */
+export async function getRecentReversals(subreddit: string, ruleSlug: string, limit = 5): Promise<ReceiptRecord[]> {
+  const all = await getRuleRecords(subreddit, ruleSlug, 100);
+  return all.filter((r) => r.appealStatus === "overturned").slice(0, limit);
+}
+
+/** List of (ruleSlug, displayLabel, count) for a subreddit, newest-first by first-seen. */
+export async function listRules(subreddit: string, limit = 50): Promise<Array<{ slug: string; label: string; count: number }>> {
+  const sub = subreddit.trim();
+  if (!sub) return [];
+  const slugs = await idsNewestFirst(RULE_INDEX(sub), limit);
+  const out: Array<{ slug: string; label: string; count: number }> = [];
+  for (const slug of slugs) {
+    const [label, count] = await Promise.all([redis.get(RULE_LABEL(sub, slug)), redis.zCard(RULE(sub, slug))]);
+    out.push({ slug, label: label || slug, count: count ?? 0 });
+  }
+  return out;
+}
+
 export async function setAppealStatus(itemId: string, status: AppealStatus, when: number): Promise<void> {
   await redis.hSet(ITEM(itemId), { appealStatus: status, appealedAt: String(when) });
+}
+
+/** Mark a receipt as overturned (the mod ran /reverse). */
+export async function markReversed(itemId: string, when: number): Promise<void> {
+  await setAppealStatus(itemId, "overturned", when);
+}
+
+/** Remember which Receipts modmail thread corresponds to which user/item, so a mod's
+ *  later /reverse reply can be routed back to the correct removal record. */
+export async function rememberConv(conversationId: string, info: { itemId: string; user: string }): Promise<void> {
+  if (!conversationId) return;
+  await redis.hSet(CONV(conversationId), { itemId: info.itemId, user: info.user.toLowerCase() });
+}
+
+export async function lookupConv(conversationId: string): Promise<{ itemId: string; user: string } | undefined> {
+  if (!conversationId) return undefined;
+  const h = await redis.hGetAll(CONV(conversationId));
+  if (!h || !h.itemId) return undefined;
+  return { itemId: h.itemId, user: h.user ?? "" };
 }

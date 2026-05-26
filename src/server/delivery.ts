@@ -18,24 +18,30 @@ export async function deliverComment(itemId: string, body: string): Promise<bool
   }
 }
 
+/** Returns the conversationId on success so callers can index modmail threads → records. */
 export async function deliverModmail(
   subreddit: string,
   username: string,
   subject: string,
   body: string,
-): Promise<boolean> {
+): Promise<string | undefined> {
   try {
-    await reddit.modMail.createConversation({
+    const res = await reddit.modMail.createConversation({
       subredditName: subreddit,
       to: username,
       subject,
       body,
       isAuthorHidden: true, // send as the subreddit, not the app account
     });
-    return true;
+    // The Devvit response wraps the conversation object; pluck the id defensively.
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const anyRes = res as any;
+    const id: string | undefined =
+      anyRes?.conversation?.id ?? anyRes?.conversationId ?? anyRes?.id;
+    return id;
   } catch (e) {
     console.error(`[receipts] modmail delivery failed for u/${username}:`, e);
-    return false;
+    return undefined;
   }
 }
 
@@ -48,16 +54,27 @@ export interface DeliverInput {
   body: string;
 }
 
-/** Returns a short tag describing which channels actually delivered, e.g. "comment+modmail". */
-export async function deliver(opts: DeliverInput): Promise<string> {
+export interface DeliverResult {
+  /** Short tag describing which channels actually delivered, e.g. "comment+modmail". */
+  tag: string;
+  /** Set when a modmail conversation was successfully created. */
+  modmailConversationId?: string;
+}
+
+export async function deliver(opts: DeliverInput): Promise<DeliverResult> {
   const parts: string[] = [];
+  let modmailConversationId: string | undefined;
   const wantComment = opts.channel === "comment" || opts.channel === "both";
   const wantModmail = opts.channel === "modmail" || opts.channel === "both";
   if (wantComment && opts.itemId && (await deliverComment(opts.itemId, opts.body))) {
     parts.push("comment");
   }
-  if (wantModmail && opts.username && (await deliverModmail(opts.subreddit, opts.username, "Your content was removed", opts.body))) {
-    parts.push("modmail");
+  if (wantModmail && opts.username) {
+    const convId = await deliverModmail(opts.subreddit, opts.username, "Your content was removed", opts.body);
+    if (convId !== undefined) {
+      parts.push("modmail");
+      modmailConversationId = convId;
+    }
   }
-  return parts.length ? parts.join("+") : "none";
+  return { tag: parts.length ? parts.join("+") : "none", modmailConversationId };
 }

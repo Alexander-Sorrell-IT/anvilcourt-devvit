@@ -30,4 +30,5 @@ export interface ReceiptRecord {
   ts: number;
   appealStatus: AppealStatus;
   appealedAt?: number;
+  subreddit?: string;        // sub the removal happened in (for rule-scoped indexes)
 }

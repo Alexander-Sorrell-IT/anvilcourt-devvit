@@ -20,11 +20,19 @@
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/recent-log"
+      },
+      {
+        "label": "Receipts: case file by rule",
+        "description": "Every removal grouped by rule — precedent at a glance",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/case-file"
       }
     ]
   },
   "forms": {
-    "lookupUser": "/internal/form/lookup-user"
+    "lookupUser": "/internal/form/lookup-user",
+    "caseFile": "/internal/form/case-file"
   },
   "triggers": {
     "onAppInstall": "/internal/on-app-install",

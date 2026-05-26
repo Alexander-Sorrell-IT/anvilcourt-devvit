@@ -2,7 +2,13 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { once } from "node:events";
 import { Endpoint } from "../shared/api.ts";
 import { handleModAction, handleAutomodFilter, handleModMail, handleAppInstall } from "./triggers.ts";
-import { lookupUserMenu, lookupUserForm, recentLogMenu } from "./menus.ts";
+import {
+  caseFileForm,
+  caseFileMenu,
+  lookupUserForm,
+  lookupUserMenu,
+  recentLogMenu,
+} from "./menus.ts";
 
 export async function serverOnRequest(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
   try {
@@ -38,6 +44,10 @@ async function route(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
       return writeJSON(200, await lookupUserForm(await readJSON(req)), rsp);
     case Endpoint.MenuRecentLog:
       return writeJSON(200, await recentLogMenu(), rsp);
+    case Endpoint.MenuCaseFile:
+      return writeJSON(200, await caseFileMenu(), rsp);
+    case Endpoint.FormCaseFile:
+      return writeJSON(200, await caseFileForm(await readJSON(req)), rsp);
     default:
       return writeJSON(404, { error: "not found" }, rsp);
   }

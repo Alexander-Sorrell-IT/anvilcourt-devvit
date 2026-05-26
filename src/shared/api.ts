@@ -9,6 +9,8 @@ export const Endpoint = {
   MenuLookupUser: "/internal/menu/lookup-user",
   FormLookupUser: "/internal/form/lookup-user",
   MenuRecentLog: "/internal/menu/recent-log",
+  MenuCaseFile: "/internal/menu/case-file",
+  FormCaseFile: "/internal/form/case-file",
 } as const;
 
 export type Endpoint = (typeof Endpoint)[keyof typeof Endpoint];

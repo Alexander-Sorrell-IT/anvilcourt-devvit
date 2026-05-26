@@ -6,7 +6,7 @@ import { resolveReason } from "../core/reasonResolver.ts";
 import { composeExplanation } from "../core/explanationComposer.ts";
 import { makeReasonLookups } from "./reasonSources.ts";
 import { deliver } from "./delivery.ts";
-import { claimUnseen, writeRecord } from "./audit.ts";
+import { claimUnseen, writeRecord, rememberConv } from "./audit.ts";
 
 export async function processRemoval(event: RemovalEvent): Promise<void> {
   if (!event.itemId || !event.author) return;
@@ -31,6 +31,7 @@ export async function processRemoval(event: RemovalEvent): Promise<void> {
   );
 
   let deliveredVia = "suppressed";
+  let modmailConvId: string | undefined;
   if (!optedOut) {
     const body = composeExplanation({
       reason,
@@ -40,7 +41,7 @@ export async function processRemoval(event: RemovalEvent): Promise<void> {
       appealInstructions: cfg.appealInstructions,
       appealsEnabled: cfg.appealsEnabled,
     });
-    deliveredVia = await deliver({
+    const result = await deliver({
       channel: cfg.deliveryChannel,
       itemId: event.itemId,
       itemType: event.itemType,
@@ -48,6 +49,8 @@ export async function processRemoval(event: RemovalEvent): Promise<void> {
       username: event.author,
       body,
     });
+    deliveredVia = result.tag;
+    modmailConvId = result.modmailConversationId;
   }
 
   const record: ReceiptRecord = {
@@ -62,7 +65,11 @@ export async function processRemoval(event: RemovalEvent): Promise<void> {
     modName: event.modName,
     ts: event.ts,
     appealStatus: "none",
+    subreddit: event.subreddit,
   };
   await writeRecord(record);
+  if (modmailConvId) {
+    await rememberConv(modmailConvId, { itemId: event.itemId, user: event.author });
+  }
   console.log(`[receipts] ${event.source} ${event.itemType} ${event.itemId} -> ${reason.tier} -> ${deliveredVia}`);
 }
