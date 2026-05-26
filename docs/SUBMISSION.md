@@ -12,20 +12,7 @@
 
 **Receipts ends silent moderation. Every content removal — by a mod, by AutoModerator's silent `filter`, by an AutoMod remove rule, or by Reddit's spam filter — automatically explains itself to the author, with a built-in appeal channel and a searchable, mod-only audit log.**
 
-The problem in one paragraph: AutoModerator's `filter` action sends posts to the modqueue and tells the author *nothing*. Native Removal Reasons require a mod to click and pick on every removal and don't cover AutoMod at all. The result is a flood of *"why was my post removed?"* modmail, daily appeal archaeology, and the invisible attrition of good contributors who assumed they were censored. Receipts fixes all three at once.
-
-**The pipeline, fully automatic:**
-
-1. **Detect + reason.** Catches every removal across all four sources via `ModAction`, `AutomoderatorFilterPost`, and `AutomoderatorFilterComment` triggers (deduplicated so one removal = one action). Resolves *why* through a deterministic 4-tier fallback: AutoMod filter reason → mod log (selected removal reason or `action_reason`) → configured removal-reason text → clear generic notice.
-2. **Explain.** Posts a stickied, distinguished in-place comment and/or a modmail to the author, each carrying a *"reply here if you think this is a mistake"* appeal line.
-3. **Appeal loop.** Modmail replies land in the mod inbox and Receipts flags them as appeals. **A human moderator always makes the final call — the bot never overturns a removal.**
-4. **Audit.** Every decision lands in a searchable, mod-only log. Two menu actions — *"look up user"* and *"recent removals"* — turn appeal handling from two minutes of profile forensics into a two-second lookup.
-
-**For moderators:** install in two clicks, works immediately. A settings screen exposes delivery channel, message template, per-source toggles, appeals on/off, and per-reason opt-out (e.g. spam, ban evasion) — no code, no YAML.
-
-**For users:** instead of silence, a clear, polite, rule-cited explanation and a real way to be heard.
-
-### What exists today vs. Receipts
+### The pitch in one table
 
 | Removal source | What the author sees today | With Receipts |
 |---|---|---|
@@ -36,6 +23,21 @@ The problem in one paragraph: AutoModerator's `filter` action sends posts to the
 | Reddit spam filter | Nothing | Configurable (off by default — avoids tipping spammers) |
 
 **Why it's new to Devvit:** a review of 36+ existing Devvit mod apps found none that automatically explain AutoMod's *silent filter* removals or maintain a unified removal+reason audit log across all four sources. Receipts is the first tool to make moderation *show its work* — every removal, every source, zero configuration.
+
+### The problem
+
+AutoModerator's `filter` action sends posts to the modqueue and tells the author *nothing*. Native Removal Reasons require a mod to click and pick on every removal and don't cover AutoMod at all. The result is a flood of *"why was my post removed?"* modmail, daily appeal archaeology, and the invisible attrition of good contributors who assumed they were censored. Receipts fixes all three at once.
+
+### The pipeline, fully automatic
+
+1. **Detect + reason.** Catches every removal across all four sources via `ModAction`, `AutomoderatorFilterPost`, and `AutomoderatorFilterComment` triggers (deduplicated so one removal = one action). Resolves *why* through a deterministic 4-tier fallback: AutoMod filter reason → mod log (selected removal reason or `action_reason`) → configured removal-reason text → clear generic notice.
+2. **Explain.** Posts a stickied, distinguished in-place comment and/or a modmail to the author, each carrying a *"reply here if you think this is a mistake"* appeal line.
+3. **Appeal loop.** Modmail replies land in the mod inbox and Receipts flags them as appeals. **A human moderator always makes the final call — the bot never overturns a removal.**
+4. **Audit.** Every decision lands in a searchable, mod-only log. Two menu actions — *"look up user"* and *"recent removals"* — turn appeal handling from two minutes of profile forensics into a two-second lookup.
+
+**For moderators:** install in two clicks, works immediately. A settings screen exposes delivery channel, message template, per-source toggles, appeals on/off, and per-reason opt-out (e.g. spam, ban evasion) — no code, no YAML.
+
+**For users:** instead of silence, a clear, polite, rule-cited explanation and a real way to be heard.
 
 ---
 
