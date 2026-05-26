@@ -105,5 +105,8 @@
   },
   "dev": {
     "subreddit": "alexander_sorrell_IT"
+  },
+  "marketingAssets": {
+    "icon": "assets/icon.png"
   }
 }
