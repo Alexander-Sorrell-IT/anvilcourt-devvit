@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderMirrorMarkdown, rollupRule } from '../../src/core/mirror.ts';
+import { renderMirrorMarkdown, rollupRule, sanitizeRuleLabel } from '../../src/core/mirror.ts';
 import type { ReceiptRecord } from '../../src/core/types.ts';
 
 const NOW = 1730000000000; // arbitrary fixed timestamp
@@ -106,5 +106,45 @@ describe('renderMirrorMarkdown', () => {
       generatedAt: NOW,
     });
     expect(md).toContain('Rule with \\| pipe');
+  });
+  it('escapes link/code/html injection in rule labels', () => {
+    const md = renderMirrorMarkdown({
+      subreddit: 'testsub',
+      rules: [
+        rollupRule({
+          label: 'Bad `code` [link](evil.com) <script>',
+          slug: 'bad',
+          records: [rec()],
+          now: NOW,
+        }),
+      ],
+      generatedAt: NOW,
+    });
+    // None of the injection-rendering markdown/HTML survives untouched.
+    expect(md).not.toContain('`code`');
+    expect(md).not.toContain('[link](evil.com)');
+    expect(md).not.toContain('<script>');
+    expect(md).toContain('\\[link\\](evil.com)');
+    expect(md).toContain('&lt;script&gt;');
+  });
+});
+
+describe('sanitizeRuleLabel', () => {
+  it('redacts u/username mentions', () => {
+    expect(sanitizeRuleLabel("removed u/bob's spam ring")).toBe("removed u/[redacted]'s spam ring");
+    expect(sanitizeRuleLabel('reported by /u/alice today')).toBe('reported by /u/[redacted] today');
+  });
+  it('redacts URLs', () => {
+    expect(sanitizeRuleLabel('see https://evil.example/abc for context'))
+      .toBe('see [link] for context');
+  });
+  it('collapses whitespace and trims', () => {
+    expect(sanitizeRuleLabel('   too   much   space   ')).toBe('too much space');
+  });
+  it('returns empty for empty input', () => {
+    expect(sanitizeRuleLabel('')).toBe('');
+  });
+  it('passes through clean labels unchanged', () => {
+    expect(sanitizeRuleLabel('No spam')).toBe('No spam');
   });
 });

@@ -4,6 +4,8 @@ import { context, reddit } from "@devvit/web/server";
 import type { RemovalEvent, RemovalSource, ItemType, ReceiptRecord } from "../core/types.ts";
 import { processRemoval } from "./pipeline.ts";
 import {
+  claimPanelEmitOnce,
+  claimWelcomedOnce,
   getRecord,
   getRuleRecords,
   getRecentReversals,
@@ -21,6 +23,7 @@ import {
   computeRuleStats,
   parseModCommand,
   parseUserCommand,
+  priorRecordsExcluding,
   ruleKey,
   ruleLabel,
 } from "../core/caseLaw.ts";
@@ -32,26 +35,33 @@ type Payload = Record<string, any>;
 
 // On install, post a one-time welcome to the mod team explaining the app is active.
 export async function handleAppInstall(): Promise<void> {
-  try {
-    const subredditId = context.subredditId;
-    if (!subredditId) return;
-    await reddit.modMail.createModDiscussionConversation({
-      subject: "Anvil Court is now active",
-      bodyMarkdown:
-        "**Anvil Court is installed and running.** The case-law engine for r/" + (context as unknown as { subredditName?: string }).subredditName + ".\n\n" +
-        "When a post or comment is removed — by a mod, by AutoModerator's silent filter, by an AutoMod remove rule, or by Reddit's spam filter — the author now automatically gets a clear, rule-cited explanation with an appeal option, and the decision is logged.\n\n" +
-        "**Case law for moderation, three surfaces, one substrate:**\n" +
-        "- **Triage:** mod menu on any post or comment → *Anvil Court: precedent for this item* — see the rule's prior outcomes before you decide.\n" +
-        "- **Appeal:** when a user appeals via modmail, Anvil Court auto-renders an internal note in the same thread showing the rule's reversal rate and recent reversals. Reply **`/reverse [note]`** to one-click restore the content, DM the user, and log the reversal as precedent.\n" +
-        "- **Public ledger:** mod menu → *Anvil Court: publish public mirror* — refresh an aggregate, anonymized case-law page at /wiki/anvil-court. Counts only, no usernames or links.\n" +
-        "- **Look up:** menu → *Anvil Court: look up user* / *recent removals* / *case file by rule*.\n" +
-        "- **Self-serve:** users can DM the sub with `/my-receipts` to see their own history.\n" +
-        "- **Cold-start:** we've backfilled the last 90 days of your mod log so precedent works from day one.\n\n" +
-        "Appeals come to *you* — Anvil Court never overturns a removal automatically.",
-      subredditId: subredditId as `t5_${string}`,
-    });
-  } catch (e) {
-    console.error("[anvilcourt] welcome modmail failed:", e);
+  const subredditId = context.subredditId;
+  if (!subredditId) return;
+  const subName = (context as unknown as { subredditName?: string }).subredditName ?? "";
+  const subDisplay = subName ? `r/${subName}` : "this community";
+
+  // Idempotency: skip the welcome on reinstall / app update so we don't clutter the mod inbox.
+  const firstInstall = await claimWelcomedOnce(subName);
+  if (firstInstall) {
+    try {
+      await reddit.modMail.createModDiscussionConversation({
+        subject: "Anvil Court is now active",
+        bodyMarkdown:
+          `**Anvil Court is installed and running.** The case-law engine for ${subDisplay}.\n\n` +
+          "When a post or comment is removed — by a mod, by AutoModerator's silent filter, by an AutoMod remove rule, or by Reddit's spam filter — the author now automatically gets a clear, rule-cited explanation with an appeal option, and the decision is logged.\n\n" +
+          "**Case law for moderation, three surfaces, one substrate:**\n" +
+          "- **Triage:** mod menu on any post or comment → *Anvil Court: precedent for this item* — see the rule's prior outcomes before you decide.\n" +
+          "- **Appeal:** when a user appeals via modmail, Anvil Court auto-renders an internal note in the same thread showing the rule's reversal rate and recent reversals. Reply **`/reverse [note]`** to one-click restore the content, DM the user, and log the reversal as precedent.\n" +
+          "- **Public ledger:** mod menu → *Anvil Court: publish public mirror* — refresh an aggregate, anonymized case-law page at /wiki/anvil-court. Counts only, no usernames or links.\n" +
+          "- **Look up:** menu → *Anvil Court: look up user* / *recent removals* / *case file by rule*.\n" +
+          "- **Self-serve:** users can DM the sub with `/my-receipts` to see their own history.\n" +
+          "- **Cold-start:** we're backfilling the last 90 days of your mod log right now so precedent works from day one.\n\n" +
+          "Appeals come to *you* — Anvil Court never overturns a removal automatically.",
+        subredditId: subredditId as `t5_${string}`,
+      });
+    } catch (e) {
+      console.error("[anvilcourt] welcome modmail failed:", e);
+    }
   }
   // Cold-start: backfill the last 90 days of modlog so the precedent panel has
   // a populated corpus on the first appeal. Errors are logged inside, not thrown.
@@ -86,7 +96,8 @@ export async function handleModAction(p: Payload): Promise<void> {
 
   const isComment = action.endsWith("comment");
   const modName: string | undefined = p?.moderator?.name || undefined;
-  const isAutomod = modName === "AutoModerator";
+  // Case-insensitive AutoModerator detection (Reddit deployments vary in casing).
+  const isAutomod = typeof modName === "string" && modName.toLowerCase() === "automoderator";
   const isSpam = action.startsWith("spam");
   const source: RemovalSource = isAutomod ? "automod-remove" : isSpam ? "spam" : "mod";
 
@@ -101,12 +112,20 @@ export async function handleModAction(p: Payload): Promise<void> {
   }
   if (!itemId || !author) return;
 
+  // When the mod uses Reddit's removal-reasons picker, the chosen reason lands in
+  // payload `details` (or `description`). Reading it here avoids relying on the
+  // slow/eventually-consistent mod-log lookup as the only source of truth.
+  const detailsRaw: string | undefined =
+    (typeof p?.details === "string" && p.details.trim().length > 0 ? p.details.trim() : undefined) ??
+    (typeof p?.description === "string" && p.description.trim().length > 0 ? p.description.trim() : undefined);
+
   const event: RemovalEvent = {
     itemId,
     itemType: (isComment ? "comment" : "post") as ItemType,
     author,
     subreddit: p?.subreddit?.name ?? "",
     source,
+    rawReason: detailsRaw,
     modName,
     ts: Date.now(),
   };
@@ -191,6 +210,10 @@ async function postPublicReply(conversationId: string, body: string): Promise<vo
 }
 
 // Render the precedent panel for the target receipt and post it as an internal mod note.
+// The current target's own receipt is excluded from both rule and appellant stats so the
+// panel reflects PRIOR decisions only — matching the panel's own wording ("Across N prior
+// decisions"). Without this filter, the just-flagged appeal inflates the rule total by 1
+// (e.g. 3/13 = 23% becomes 3/14 = 21%) and the appellant's "prior" count by 1.
 async function emitPrecedentPanel(
   conversationId: string,
   target: ReceiptRecord,
@@ -198,14 +221,16 @@ async function emitPrecedentPanel(
 ): Promise<void> {
   const slug = ruleKey({ ruleRef: target.ruleRef, reasonText: target.reasonText });
   const display = ruleLabel({ ruleRef: target.ruleRef, reasonText: target.reasonText });
-  const [ruleRecords, recentReversals, appellantRecords] = await Promise.all([
+  const [allRuleRecords, recentReversals, allAppellantRecords] = await Promise.all([
     getRuleRecords(subreddit, slug, 100),
     getRecentReversals(subreddit, slug, 3),
     getUserRecords(target.author, 100),
   ]);
-  const stats = computeRuleStats(ruleRecords);
-  const appellantPriorTotal = appellantRecords.length;
-  const appellantPriorOverturned = appellantRecords.filter((r) => r.appealStatus === "overturned").length;
+  const priorRuleRecords = priorRecordsExcluding(allRuleRecords, target.itemId);
+  const priorAppellantRecords = priorRecordsExcluding(allAppellantRecords, target.itemId);
+  const stats = computeRuleStats(priorRuleRecords);
+  const appellantPriorTotal = priorAppellantRecords.length;
+  const appellantPriorOverturned = priorAppellantRecords.filter((r) => r.appealStatus === "overturned").length;
   const body = composePrecedentPanel({
     subreddit,
     ruleDisplay: display,
@@ -349,9 +374,10 @@ export async function handleModMail(p: Payload): Promise<void> {
     await setAppealStatus(target.itemId, "appealed", Date.now());
   }
 
-  // Emit the precedent panel as an internal mod note (skip if we've already rendered for this thread).
+  // Emit the precedent panel as an internal mod note exactly once per conversation —
+  // a chatty appellant who replies N times must not produce N stacked panels.
   const sub = subredditName || target.subreddit || "";
-  if (sub) {
+  if (sub && (await claimPanelEmitOnce(conversationId))) {
     await emitPrecedentPanel(conversationId, target, sub);
   }
 }

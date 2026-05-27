@@ -45,6 +45,14 @@ export function computeRuleStats(records: ReceiptRecord[]): RuleStats {
   return out;
 }
 
+/** Exclude the just-flagged appeal's own record before computing precedent stats.
+ *  The precedent panel reports PRIOR decisions only — without this filter, the
+ *  current target inflates the rule total by 1 (3/13 = 23% becomes 3/14 = 21%)
+ *  and the appellant's prior count by 1. */
+export function priorRecordsExcluding(records: ReceiptRecord[], excludeItemId: string): ReceiptRecord[] {
+  return records.filter((r) => r.itemId !== excludeItemId);
+}
+
 function fmtDate(ts: number): string {
   return new Date(ts).toISOString().slice(0, 10);
 }
@@ -81,8 +89,14 @@ export function composePrecedentPanel(input: {
     lines.push('**Recent reversals on this rule:**');
     for (const r of input.recentReversals.slice(0, 3)) {
       const id = r.itemId;
-      const url = `https://www.reddit.com/r/${input.subreddit}/comments/${id.replace(/^t[13]_/, '')}/`;
-      lines.push(`- ${fmtDate(r.ts)} — u/${r.author} — [${id}](${url})`);
+      // Reddit URL shape differs for posts (/comments/<post>) vs comments (/comments/<post>/_/<comment>).
+      // We don't know the parent post id for a t1_ here, so render comment ids without a link.
+      if (id.startsWith('t3_')) {
+        const url = `https://www.reddit.com/r/${input.subreddit}/comments/${id.slice(3)}/`;
+        lines.push(`- ${fmtDate(r.ts)} — u/${r.author} — [${id}](${url})`);
+      } else {
+        lines.push(`- ${fmtDate(r.ts)} — u/${r.author} — ${id}`);
+      }
     }
   }
   lines.push('');
@@ -104,13 +118,17 @@ export function composeReversalUserDM(input: {
   note: string;
   itemId: string;
 }): string {
-  const url = `https://www.reddit.com/r/${input.subreddit}/comments/${input.itemId.replace(/^t[13]_/, '')}/`;
   const trimmedNote = input.note.trim();
   const noteLine = trimmedNote.length > 0 ? `\n\n**Moderator note:** ${trimmedNote}` : '';
+  // For posts we can build the permalink from the id; comments need the parent post id we don't have,
+  // so we name the restored thing without a link rather than render a broken URL.
+  const restored = input.itemId.startsWith('t3_')
+    ? `Your content is restored: https://www.reddit.com/r/${input.subreddit}/comments/${input.itemId.slice(3)}/`
+    : `Your ${input.itemType} (${input.itemId}) has been restored.`;
   return (
     `Good news — a moderator of r/${input.subreddit} has reversed the removal of your ${input.itemType}.\n\n` +
     `Original rule cited: *${input.ruleDisplay}*.${noteLine}\n\n` +
-    `Your content is restored: ${url}\n\n` +
+    `${restored}\n\n` +
     `This decision was reviewed by a human moderator and logged. (Anvil Court: every decision shows its work.)`
   );
 }
@@ -174,9 +192,14 @@ export function parseModCommand(body: string): ModCommand {
 
 export type UserCommand = { kind: 'my-receipts' } | { kind: 'none' };
 
-/** Parse a user's modmail body for /my-receipts (any line, case-insensitive). */
+/** Parse a user's modmail body for /my-receipts.
+ *  Requires a slash/bang prefix at the start of any line so natural-language phrases
+ *  like "I never got my receipts last week" don't trigger an unintended case-file dump. */
 export function parseUserCommand(body: string): UserCommand {
   if (!body) return { kind: 'none' };
-  if (/(^|\s)[!\/]?my[-_ ]?receipts\b/i.test(body)) return { kind: 'my-receipts' };
+  const lines = body.split(/\r?\n/);
+  for (const line of lines) {
+    if (/^\s*[!\/]my[-_ ]?receipts\b/i.test(line)) return { kind: 'my-receipts' };
+  }
   return { kind: 'none' };
 }

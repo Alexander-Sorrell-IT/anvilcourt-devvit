@@ -7,6 +7,7 @@ import {
   computeRuleStats,
   parseModCommand,
   parseUserCommand,
+  priorRecordsExcluding,
   ruleKey,
   ruleLabel,
 } from '../../src/core/caseLaw.ts';
@@ -47,6 +48,38 @@ describe('ruleLabel', () => {
     expect(ruleLabel({ ruleRef: 'Rule 1' })).toBe('Rule 1');
     expect(ruleLabel({ reasonText: 'x'.repeat(120) })).toHaveLength(80);
     expect(ruleLabel({})).toBe('unspecified rule');
+  });
+});
+
+describe('priorRecordsExcluding (precedent-panel headline-math invariant)', () => {
+  it('excludes the just-flagged target so 3-of-13 prior decisions yields 23%, not 21%', () => {
+    // The seed: 13 records under one rule, 3 marked overturned. When alice appeals the 14th
+    // removal, the precedent panel must report 3/13 = 23%, not 3/14 = 21%. The bug this
+    // guards against: alice's just-flagged record is in the bucket too at panel-render time.
+    const ALICE = 't3_alice';
+    const seedOverturned = (id: string) => baseRec({ itemId: id, appealStatus: 'overturned' });
+    const seedNone = (id: string) => baseRec({ itemId: id, appealStatus: 'none' });
+    const records: ReceiptRecord[] = [
+      seedOverturned('t3_s01'), seedOverturned('t3_s02'), seedOverturned('t3_s03'),
+      seedNone('t3_s04'), seedNone('t3_s05'), seedNone('t3_s06'), seedNone('t3_s07'),
+      seedNone('t3_s08'), seedNone('t3_s09'), seedNone('t3_s10'), seedNone('t3_s11'),
+      seedNone('t3_s12'), seedNone('t3_s13'),
+      // alice's record — already flipped to 'appealed' by the time emitPrecedentPanel runs.
+      baseRec({ itemId: ALICE, appealStatus: 'appealed' }),
+    ];
+    const prior = priorRecordsExcluding(records, ALICE);
+    const stats = computeRuleStats(prior);
+    expect(stats.total).toBe(13);
+    expect(stats.overturned).toBe(3);
+    const ratePct = Math.round((stats.overturned / stats.total) * 100);
+    expect(ratePct).toBe(23);
+  });
+  it('returns the same list when the excluded id is not present', () => {
+    const records = [baseRec({ itemId: 't3_a' }), baseRec({ itemId: 't3_b' })];
+    expect(priorRecordsExcluding(records, 't3_missing')).toHaveLength(2);
+  });
+  it('handles empty input', () => {
+    expect(priorRecordsExcluding([], 't3_anything')).toEqual([]);
   });
 });
 
@@ -128,7 +161,10 @@ describe('composeReversalUserDM', () => {
       itemId: 't1_def',
     });
     expect(body).not.toContain('**Moderator note:**');
-    expect(body).toContain('https://www.reddit.com/r/testsub/comments/def/');
+    // For comments we don't have the parent post id, so the body names the restored
+    // comment without rendering a broken /comments/<commentId> URL.
+    expect(body).not.toMatch(/https:\/\/www\.reddit\.com\/r\/testsub\/comments\/def\//);
+    expect(body).toContain('t1_def');
   });
 });
 
@@ -190,13 +226,23 @@ describe('parseUserCommand', () => {
   it('detects /my-receipts', () => {
     expect(parseUserCommand('/my-receipts')).toEqual({ kind: 'my-receipts' });
   });
-  it('accepts variants', () => {
+  it('accepts bang-prefix and underscore variants at line start', () => {
     expect(parseUserCommand('!my-receipts please')).toEqual({ kind: 'my-receipts' });
-    expect(parseUserCommand('hi, my_receipts')).toEqual({ kind: 'my-receipts' });
-    expect(parseUserCommand('Can I see my receipts?')).toEqual({ kind: 'my-receipts' });
+    expect(parseUserCommand('/my_receipts')).toEqual({ kind: 'my-receipts' });
+    expect(parseUserCommand('/MY-RECEIPTS')).toEqual({ kind: 'my-receipts' });
+  });
+  it('finds command on a later line', () => {
+    expect(parseUserCommand('hi mods,\n/my-receipts')).toEqual({ kind: 'my-receipts' });
   });
   it('returns none when not present', () => {
     expect(parseUserCommand('please respond, thanks')).toEqual({ kind: 'none' });
     expect(parseUserCommand('')).toEqual({ kind: 'none' });
+  });
+  it('does NOT match natural-language mentions without the prefix', () => {
+    // Without anchoring + required slash, an appeal like this would dump the user's case
+    // file publicly and short-circuit precedent-panel rendering. The fix.
+    expect(parseUserCommand('I never got my receipts last week')).toEqual({ kind: 'none' });
+    expect(parseUserCommand('Can I see my receipts?')).toEqual({ kind: 'none' });
+    expect(parseUserCommand('hi, my_receipts')).toEqual({ kind: 'none' });
   });
 });

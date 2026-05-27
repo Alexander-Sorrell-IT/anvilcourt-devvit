@@ -59,7 +59,7 @@ Put this on a second monitor or phone where you can see it during the recording.
 
 *(Cut directly to the wiki tab at `/r/alexander_sorrell_it/wiki/anvil-court`. Already pre-loaded. Scroll slowly down the per-rule table.)*
 
-> **"And every reversal lands in the sub's public, anonymized case-law ledger."**
+> **"And one click publishes the sub's anonymized case-law ledger."**
 >
 > *(Brief pause as the table comes into view.)*
 >

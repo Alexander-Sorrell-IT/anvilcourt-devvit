@@ -38,7 +38,14 @@
       {
         "label": "Anvil Court: precedent for this item",
         "description": "See the rule's prior outcomes for this item before you decide",
-        "location": ["post", "comment"],
+        "location": "post",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/precedent-for-item"
+      },
+      {
+        "label": "Anvil Court: precedent for this item",
+        "description": "See the rule's prior outcomes for this item before you decide",
+        "location": "comment",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/precedent-for-item"
       }
