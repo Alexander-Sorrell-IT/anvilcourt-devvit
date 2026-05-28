@@ -10,3 +10,6 @@ build/
 # generated client build artifacts (esbuild outputs into public/)
 public/*.js
 public/*.js.map
+
+# Seed-script per-account browser sessions (cookies, login state — NEVER commit).
+.seed-sessions/
