@@ -48,6 +48,20 @@
         "location": "comment",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/precedent-for-item"
+      },
+      {
+        "label": "Anvil Court: Sandbox — load demo data",
+        "description": "Inject 13 sample 'No spam' records (3 reversed = 23%) so you can evaluate the precedent panel and Mod Mirror immediately, without waiting for real removals.",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/load-sandbox"
+      },
+      {
+        "label": "Anvil Court: Sandbox — clear demo data",
+        "description": "Remove the 13 sample records loaded by the Sandbox menu.",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/clear-sandbox"
       }
     ]
   },

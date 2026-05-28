@@ -5,6 +5,8 @@ import { handleModAction, handleAutomodFilter, handleModMail, handleAppInstall }
 import {
   caseFileForm,
   caseFileMenu,
+  clearSandboxMenu,
+  loadSandboxMenu,
   lookupUserForm,
   lookupUserMenu,
   precedentForItemMenu,
@@ -54,6 +56,10 @@ async function route(req: IncomingMessage, rsp: ServerResponse): Promise<void> {
       return writeJSON(200, await publishMirrorMenu(), rsp);
     case Endpoint.MenuPrecedentForItem:
       return writeJSON(200, await precedentForItemMenu(await readJSON(req)), rsp);
+    case Endpoint.MenuLoadSandbox:
+      return writeJSON(200, await loadSandboxMenu(), rsp);
+    case Endpoint.MenuClearSandbox:
+      return writeJSON(200, await clearSandboxMenu(), rsp);
     default:
       return writeJSON(404, { error: "not found" }, rsp);
   }

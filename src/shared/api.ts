@@ -13,6 +13,8 @@ export const Endpoint = {
   FormCaseFile: "/internal/form/case-file",
   MenuPublishMirror: "/internal/menu/publish-mirror",
   MenuPrecedentForItem: "/internal/menu/precedent-for-item",
+  MenuLoadSandbox: "/internal/menu/load-sandbox",
+  MenuClearSandbox: "/internal/menu/clear-sandbox",
 } as const;
 
 export type Endpoint = (typeof Endpoint)[keyof typeof Endpoint];

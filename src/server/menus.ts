@@ -1,13 +1,16 @@
 // Moderator menu actions: look up a user's removal history, view the recent log,
 // and (new) open the Case File view — every removal grouped by rule, with outcomes.
-import { context } from "@devvit/web/server";
+import { context, redis } from "@devvit/web/server";
 import {
   getRecent,
   getRecord,
   getRuleRecords,
   getUserRecords,
   listRules,
+  markReversed,
+  writeRecord,
 } from "./audit.ts";
+import type { ReceiptRecord } from "../core/types.ts";
 import { computeRuleStats, ruleKey, ruleLabel } from "../core/caseLaw.ts";
 import { publishMirror } from "./mirror.ts";
 
@@ -176,6 +179,83 @@ export async function precedentForItemMenu(p: Payload): Promise<unknown> {
       `${display}: ${stats.total} removals, ${stats.overturned} reversed (${rate}%), ${stats.upheld} upheld.${status} ` +
       `This removal: ${ageDays}d ago by ${record.modName ?? "unknown"}.`,
   };
+}
+
+/** Menu handler: SANDBOX — load 13 sample records (3 reversed) under "No spam" so a mod
+ *  evaluating Anvil Court for the first time can see the precedent surfaces working
+ *  immediately, without waiting for real removals to accumulate. Click "Sandbox: clear
+ *  demo data" to remove them when done evaluating. */
+export async function loadSandboxMenu(): Promise<unknown> {
+  const sub = activeSubName();
+  if (!sub) return { showToast: "Anvil Court: subreddit context unavailable." };
+  const items = sandboxItemIds();
+  // Idempotency: check if first item already exists
+  const existing = await getRecord(items[0]!);
+  if (existing) {
+    return {
+      showToast:
+        "Sandbox already loaded. Clear it first with 'Sandbox: clear demo data' if you want to reload.",
+    };
+  }
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  for (let i = 0; i < items.length; i++) {
+    const record: ReceiptRecord = {
+      itemId: items[i]!,
+      author: `demo_user_${String(i + 1).padStart(2, "0")}`,
+      itemType: "post",
+      source: "automod-filter",
+      reasonText: "No spam",
+      reasonTier: "filter-reason",
+      deliveredVia: "sandbox",
+      modName: "AutoModerator",
+      ts: now - (items.length - i) * (DAY / 2),
+      appealStatus: "none",
+      subreddit: sub,
+    };
+    await writeRecord(record);
+  }
+  // Mark 3 records as overturned so the headline reads 3/13 = 23%
+  for (const idx of [1, 5, 9]) {
+    await markReversed(items[idx]!, now - (items.length - idx) * (DAY / 2) + 1000);
+  }
+  return {
+    showToast:
+      `Sandbox loaded: 13 sample 'No spam' records, 3 marked reversed (23%). ` +
+      `Try: case file by rule → 'No spam', or publish public mirror.`,
+  };
+}
+
+/** Menu handler: SANDBOX — clear the 13 sample records loaded by loadSandboxMenu. */
+export async function clearSandboxMenu(): Promise<unknown> {
+  const sub = activeSubName();
+  if (!sub) return { showToast: "Anvil Court: subreddit context unavailable." };
+  let cleared = 0;
+  for (const id of sandboxItemIds()) {
+    const r = await getRecord(id);
+    if (!r) continue;
+    // Best-effort wipe: remove the hash, the seen flag, the user/rule/recent indexes.
+    // Devvit redis client doesn't expose a "delete record" helper; do it inline.
+    const ITEM_KEY = `receipt:item:${id}`;
+    const SEEN_KEY = "receipt:seen";
+    const USER_KEY = `receipt:user:${r.author.toLowerCase()}`;
+    const RECENT_KEY = "receipt:recent";
+    await redis.del(ITEM_KEY).catch(() => undefined);
+    await redis.hDel(SEEN_KEY, [id]).catch(() => undefined);
+    await redis.zRem(USER_KEY, [id]).catch(() => undefined);
+    await redis.zRem(RECENT_KEY, [id]).catch(() => undefined);
+    if (r.subreddit) {
+      const slug = ruleKey({ ruleRef: r.ruleRef, reasonText: r.reasonText });
+      const RULE_KEY = `receipt:rule:${r.subreddit.toLowerCase()}:${slug}`;
+      await redis.zRem(RULE_KEY, [id]).catch(() => undefined);
+    }
+    cleared++;
+  }
+  return { showToast: `Sandbox cleared: ${cleared} sample record(s) removed.` };
+}
+
+function sandboxItemIds(): string[] {
+  return Array.from({ length: 13 }, (_, i) => `t3_demo${String(i + 1).padStart(2, "0")}`);
 }
 
 /** Menu handler: publish (or refresh) the public Mod Mirror wiki page. */
